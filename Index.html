@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Робочий календар Сергія</title>
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; background: #f9fafb; }
+    h1 { text-align: center; color: #1e40af; }
+    #stats { text-align: center; font-size: 1.4rem; margin: 1rem 0; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    #calendar { max-width: 1200px; margin: 0 auto; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
+  </style>
+</head>
+<body>
+  <h1>Мій робочий графік (Сергій)</h1>
+  <div id="stats">Завантаження статистики...</div>
+  <div id="calendar"></div>
+
+  <script>
+    const supabase = Supabase.createClient(
+      'https://unyztaiglminylhbinsy.supabase.co',  // ← YOUR_SUPABASE_URL
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVueXp0YWlnbG1pbnlsaGJpbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MjUwMzQsImV4cCI6MjA4OTEwMTAzNH0.aD-HFhE9XnPM_V0TBz7UJ_7lBGszSj0olz1CSkmcw_k'                 // ← YOUR_ANON_KEY
+    );
+
+    let calendar;
+
+    async function fetchAndRender() {
+      const { data, error } = await supabase
+        .from('work_days')
+        .select('date, hours')
+        .order('date');
+
+      if (error) {
+        console.error('Помилка:', error);
+        document.getElementById('stats').innerHTML = 'Помилка завантаження даних 😔';
+        return;
+      }
+
+      const totalDays = data.length;
+      const totalHours = data.reduce((sum, d) => sum + (parseFloat(d.hours) || 8), 0);
+      document.getElementById('stats').innerHTML = `
+        <strong>Статистика:</strong> ${totalDays} робочих днів | ${totalHours.toFixed(1)} годин
+        (середньо ${(totalHours / totalDays || 0).toFixed(1)} год/день)
+      `;
+
+      const events = data.map(row => ({
+        title: `${row.hours || 8} год`,
+        start: row.date,
+        allDay: true,
+        color: '#3b82f6',          // синій для робочих
+        textColor: 'white',
+        extendedProps: { hours: row.hours }
+      }));
+
+      calendar.removeAllEvents();
+      calendar.addEventSource(events);
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+      const calendarEl = document.getElementById('calendar');
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'uk',
+        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
+        editable: false,  // спочатку без редагування
+        events: [],
+
+        dateClick: async function(info) {
+          // Простий захист: запитай пароль (зміни 'секрет2026' на свій)
+          const pass = prompt('Введи пароль для редагування (тільки Сергій):');
+          if (pass !== 'секрет2026') {  // ← зміни на свій пароль!
+            alert('Неправильний пароль. Тільки для редагування.');
+            return;
+          }
+
+          let hoursStr = prompt(`Скільки годин працював ${info.dateStr}? (Enter для видалення)`, '8');
+          if (hoursStr === null) return;
+
+          const hours = parseFloat(hoursStr);
+          if (isNaN(hours) || hours <= 0) {
+            if (confirm('Видалити цей день?')) {
+              await supabase.from('work_days').delete().eq('date', info.dateStr);
+            }
+          } else {
+            await supabase
+              .from('work_days')
+              .upsert({ date: info.dateStr, hours }, { onConflict: 'date' });
+          }
+
+          fetchAndRender();  // оновити все
+        }
+      });
+
+      calendar.render();
+      fetchAndRender();  // перше завантаження
+    });
+  </script>
+</body>
+</html>
