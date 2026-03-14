@@ -4,100 +4,114 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Робочий календар Сергія</title>
+  <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    body { font-family: system-ui, sans-serif; margin: 2rem; background: #f9fafb; }
-    h1 { text-align: center; color: #1e40af; }
-    #stats { text-align: center; font-size: 1.4rem; margin: 1rem 0; padding: 1rem; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-    #calendar { max-width: 1200px; margin: 0 auto; background: white; padding: 1rem; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); }
-  </style>
-</head>
-<body>
-  <h1>Мій робочий графік (Сергій)</h1>
-  <div id="stats">Завантаження статистики...</div>
-  <div id="calendar"></div>
-
   <script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-  const supabase = createClient(
-    'https://unyztaiglminylhbinsy.supabase.co',
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVueXp0YWlnbG1pbnlsaGJpbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MjUwMzQsImV4cCI6MjA4OTEwMTAzNH0.aD-HFhE9XnPM_V0TBz7UJ_7lBGszSj0olz1CSkmcw_k'
-  );
+    const supabase = createClient(
+      'https://unyztaiglminylhbinsy.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVueXp0YWlnbG1pbnlsaGJpbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MjUwMzQsImV4cCI6MjA4OTEwMTAzNH0.aD-HFhE9XnPM_V0TBz7UJ_7lBGszSj0olz1CSkmcw_k'
+    );
 
-  let calendar;
+    let calendar;
 
-  async function fetchAndRender() {
-    const { data, error } = await supabase
-      .from('work_days')
-      .select('date, hours')
-      .order('date');
+    async function fetchAndRender() {
+      const { data, error } = await supabase
+        .from('work_days')
+        .select('date')
+        .order('date');
 
-    if (error) {
-      console.error('Помилка Supabase:', error);
-      document.getElementById('stats').innerHTML = 'Помилка завантаження даних 😔 Перевір консоль (F12)';
-      return;
+      if (error) {
+        console.error(error);
+        document.getElementById('stats').innerHTML = `<p class="text-red-500">Помилка завантаження 😔</p>`;
+        return;
+      }
+
+      const days = data.map(d => d.date);
+      const totalDays = days.length;
+
+      // Статистика по місяцях
+      const monthly = {};
+      days.forEach(date => {
+        const month = date.substring(0, 7); // "2026-03"
+        monthly[month] = (monthly[month] || 0) + 1;
+      });
+
+      let monthlyHTML = Object.keys(monthly)
+        .sort()
+        .map(m => `<div class="bg-white p-2 rounded">\( {m} — <strong> \){monthly[m]}</strong> днів</div>`)
+        .join('');
+
+      document.getElementById('stats').innerHTML = `
+        <div class="text-2xl font-bold text-blue-600">${totalDays} робочих днів</div>
+        <div class="mt-4 grid grid-cols-2 gap-3 text-sm">${monthlyHTML}</div>
+      `;
+
+      const events = days.map(date => ({
+        title: '✅ Робочий день',
+        start: date,
+        allDay: true,
+        color: '#10b981',
+        textColor: 'white'
+      }));
+
+      calendar.removeAllEvents();
+      calendar.addEventSource(events);
     }
 
-    const totalDays = data.length;
-    const totalHours = data.reduce((sum, d) => sum + (parseFloat(d.hours) || 8), 0);
-    document.getElementById('stats').innerHTML = `
-      <strong>Статистика:</strong> ${totalDays} робочих днів | ${totalHours.toFixed(1)} годин
-      (середньо ${(totalDays > 0 ? totalHours / totalDays : 0).toFixed(1)} год/день)
-    `;
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Tailwind
+      document.documentElement.style.setProperty('--tw-ring-color', '#3b82f6');
 
-    const events = data.map(row => ({
-      title: `${row.hours || 8} год`,
-      start: row.date,
-      allDay: true,
-      color: '#3b82f6',
-      textColor: 'white',
-      extendedProps: { hours: row.hours }
-    }));
+      const calendarEl = document.getElementById('calendar');
+      calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'uk',
+        headerToolbar: {
+          left: 'prev,next today',
+          center: 'title',
+          right: 'dayGridMonth'
+        },
+        height: 'auto',
+        events: [],
 
-    calendar.removeAllEvents();
-    calendar.addEventSource(events);
-  }
-
-  document.addEventListener('DOMContentLoaded', function () {
-    const calendarEl = document.getElementById('calendar');
-    calendar = new FullCalendar.Calendar(calendarEl, {
-      initialView: 'dayGridMonth',
-      locale: 'uk',
-      headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-      editable: false,
-      events: [],
-
-      dateClick: async function(info) {
-        const pass = prompt('Введи пароль для редагування (тільки Сергій):');
-        if (pass !== 'секрет2026') {  // ← зміни на свій!
-          alert('Неправильний пароль.');
-          return;
-        }
-
-        let hoursStr = prompt(`Скільки годин працював ${info.dateStr}? (порожньо або 0 = видалити)`, '8');
-        if (hoursStr === null) return;
-
-        const hours = parseFloat(hoursStr);
-        if (isNaN(hours) || hours <= 0) {
-          if (confirm('Видалити цей день?')) {
-            await supabase.from('work_days').delete().eq('date', info.dateStr);
+        dateClick: async function(info) {
+          const pass = prompt('Введи пароль для зміни (тільки Сергій):');
+          if (pass !== '2026') {  // ← ЗМІНИ НА СВІЙ ПАРОЛЬ!
+            alert('Неправильний пароль');
+            return;
           }
-        } else {
-          await supabase
-            .from('work_days')
-            .upsert({ date: info.dateStr, hours }, { onConflict: 'date' });
+
+          const exists = confirm(`Зробити ${info.dateStr} робочим днем?\n(OK = додати, Скасувати = видалити)`);
+
+          try {
+            if (exists) {
+              await supabase.from('work_days').upsert({ date: info.dateStr });
+            } else {
+              await supabase.from('work_days').delete().eq('date', info.dateStr);
+            }
+            await fetchAndRender();
+          } catch (err) {
+            alert('Помилка збереження: ' + err.message);
+            console.error(err);
+          }
         }
+      });
 
-        await fetchAndRender();
-      }
+      calendar.render();
+      await fetchAndRender();
     });
-
-    calendar.render();
-    fetchAndRender();
-  });
-</script>
+  </script>
+</head>
+<body class="bg-gray-100 py-8">
+  <div class="max-w-4xl mx-auto px-4">
+    <h1 class="text-4xl font-bold text-center text-blue-700 mb-8">Мій робочий графік (Сергій)</h1>
+    
+    <div id="stats" class="bg-white rounded-2xl shadow-xl p-8 mb-8 text-center"></div>
+    
+    <div id="calendar" class="bg-white rounded-3xl shadow-2xl p-6"></div>
+  </div>
 </body>
 </html>
