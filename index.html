@@ -19,84 +19,85 @@
   <div id="stats">Завантаження статистики...</div>
   <div id="calendar"></div>
 
-  <script>
-    const supabase = Supabase.createClient(
-      'https://unyztaiglminylhbinsy.supabase.co',  // ← YOUR_SUPABASE_URL
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVueXp0YWlnbG1pbnlsaGJpbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MjUwMzQsImV4cCI6MjA4OTEwMTAzNH0.aD-HFhE9XnPM_V0TBz7UJ_7lBGszSj0olz1CSkmcw_k'                 // ← YOUR_ANON_KEY
-    );
+  <script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
 
-    let calendar;
+  const supabase = createClient(
+    'https://unyztaiglminylhbinsy.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVueXp0YWlnbG1pbnlsaGJpbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MjUwMzQsImV4cCI6MjA4OTEwMTAzNH0.aD-HFhE9XnPM_V0TBz7UJ_7lBGszSj0olz1CSkmcw_k'
+  );
 
-    async function fetchAndRender() {
-      const { data, error } = await supabase
-        .from('work_days')
-        .select('date, hours')
-        .order('date');
+  let calendar;
 
-      if (error) {
-        console.error('Помилка:', error);
-        document.getElementById('stats').innerHTML = 'Помилка завантаження даних 😔';
-        return;
-      }
+  async function fetchAndRender() {
+    const { data, error } = await supabase
+      .from('work_days')
+      .select('date, hours')
+      .order('date');
 
-      const totalDays = data.length;
-      const totalHours = data.reduce((sum, d) => sum + (parseFloat(d.hours) || 8), 0);
-      document.getElementById('stats').innerHTML = `
-        <strong>Статистика:</strong> ${totalDays} робочих днів | ${totalHours.toFixed(1)} годин
-        (середньо ${(totalHours / totalDays || 0).toFixed(1)} год/день)
-      `;
-
-      const events = data.map(row => ({
-        title: `${row.hours || 8} год`,
-        start: row.date,
-        allDay: true,
-        color: '#3b82f6',          // синій для робочих
-        textColor: 'white',
-        extendedProps: { hours: row.hours }
-      }));
-
-      calendar.removeAllEvents();
-      calendar.addEventSource(events);
+    if (error) {
+      console.error('Помилка Supabase:', error);
+      document.getElementById('stats').innerHTML = 'Помилка завантаження даних 😔 Перевір консоль (F12)';
+      return;
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
-      const calendarEl = document.getElementById('calendar');
-      calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        locale: 'uk',
-        headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
-        editable: false,  // спочатку без редагування
-        events: [],
+    const totalDays = data.length;
+    const totalHours = data.reduce((sum, d) => sum + (parseFloat(d.hours) || 8), 0);
+    document.getElementById('stats').innerHTML = `
+      <strong>Статистика:</strong> ${totalDays} робочих днів | ${totalHours.toFixed(1)} годин
+      (середньо ${(totalDays > 0 ? totalHours / totalDays : 0).toFixed(1)} год/день)
+    `;
 
-        dateClick: async function(info) {
-          // Простий захист: запитай пароль (зміни 'секрет2026' на свій)
-          const pass = prompt('Введи пароль для редагування (тільки Сергій):');
-          if (pass !== 'секрет2026') {  // ← зміни на свій пароль!
-            alert('Неправильний пароль. Тільки для редагування.');
-            return;
-          }
+    const events = data.map(row => ({
+      title: `${row.hours || 8} год`,
+      start: row.date,
+      allDay: true,
+      color: '#3b82f6',
+      textColor: 'white',
+      extendedProps: { hours: row.hours }
+    }));
 
-          let hoursStr = prompt(`Скільки годин працював ${info.dateStr}? (Enter для видалення)`, '8');
-          if (hoursStr === null) return;
+    calendar.removeAllEvents();
+    calendar.addEventSource(events);
+  }
 
-          const hours = parseFloat(hoursStr);
-          if (isNaN(hours) || hours <= 0) {
-            if (confirm('Видалити цей день?')) {
-              await supabase.from('work_days').delete().eq('date', info.dateStr);
-            }
-          } else {
-            await supabase
-              .from('work_days')
-              .upsert({ date: info.dateStr, hours }, { onConflict: 'date' });
-          }
+  document.addEventListener('DOMContentLoaded', function () {
+    const calendarEl = document.getElementById('calendar');
+    calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'dayGridMonth',
+      locale: 'uk',
+      headerToolbar: { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek' },
+      editable: false,
+      events: [],
 
-          fetchAndRender();  // оновити все
+      dateClick: async function(info) {
+        const pass = prompt('Введи пароль для редагування (тільки Сергій):');
+        if (pass !== 'секрет2026') {  // ← зміни на свій!
+          alert('Неправильний пароль.');
+          return;
         }
-      });
 
-      calendar.render();
-      fetchAndRender();  // перше завантаження
+        let hoursStr = prompt(`Скільки годин працював ${info.dateStr}? (порожньо або 0 = видалити)`, '8');
+        if (hoursStr === null) return;
+
+        const hours = parseFloat(hoursStr);
+        if (isNaN(hours) || hours <= 0) {
+          if (confirm('Видалити цей день?')) {
+            await supabase.from('work_days').delete().eq('date', info.dateStr);
+          }
+        } else {
+          await supabase
+            .from('work_days')
+            .upsert({ date: info.dateStr, hours }, { onConflict: 'date' });
+        }
+
+        await fetchAndRender();
+      }
     });
-  </script>
+
+    calendar.render();
+    fetchAndRender();
+  });
+</script>
 </body>
 </html>
