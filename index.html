@@ -1,117 +1,170 @@
 <!DOCTYPE html>
 <html lang="uk">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Робочий календар Сергія</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.css" rel="stylesheet" />
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js"></script>
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Робочий календар Сергія</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales/uk.global.min.js"></script>
 
-    const supabase = createClient(
-      'https://unyztaiglminylhbinsy.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVueXp0YWlnbG1pbnlsaGJpbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MjUwMzQsImV4cCI6MjA4OTEwMTAzNH0.aD-HFhE9XnPM_V0TBz7UJ_7lBGszSj0olz1CSkmcw_k'
-    );
-
-    let calendar;
-
-    async function fetchAndRender() {
-      const { data, error } = await supabase
-        .from('work_days')
-        .select('date')
-        .order('date');
-
-      if (error) {
-        console.error(error);
-        document.getElementById('stats').innerHTML = `<p class="text-red-500">Помилка завантаження 😔</p>`;
-        return;
-      }
-
-      const days = data.map(d => d.date);
-      const totalDays = days.length;
-
-      // Статистика по місяцях
-      const monthly = {};
-      days.forEach(date => {
-        const month = date.substring(0, 7); // "2026-03"
-        monthly[month] = (monthly[month] || 0) + 1;
-      });
-
-      let monthlyHTML = Object.keys(monthly)
-        .sort()
-        .map(m => `<div class="bg-white p-2 rounded">\( {m} — <strong> \){monthly[m]}</strong> днів</div>`)
-        .join('');
-
-      document.getElementById('stats').innerHTML = `
-        <div class="text-2xl font-bold text-blue-600">${totalDays} робочих днів</div>
-        <div class="mt-4 grid grid-cols-2 gap-3 text-sm">${monthlyHTML}</div>
-      `;
-
-      const events = days.map(date => ({
-        title: '✅ Робочий день',
-        start: date,
-        allDay: true,
-        color: '#10b981',
-        textColor: 'white'
-      }));
-
-      calendar.removeAllEvents();
-      calendar.addEventSource(events);
-    }
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      // Tailwind
-      document.documentElement.style.setProperty('--tw-ring-color', '#3b82f6');
-
-      const calendarEl = document.getElementById('calendar');
-      calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        locale: 'uk',
-        headerToolbar: {
-          left: 'prev,next today',
-          center: 'title',
-          right: 'dayGridMonth'
-        },
-        height: 'auto',
-        events: [],
-
-        dateClick: async function(info) {
-          const pass = prompt('Введи пароль для зміни (тільки Сергій):');
-          if (pass !== '2026') {  // ← ЗМІНИ НА СВІЙ ПАРОЛЬ!
-            alert('Неправильний пароль');
-            return;
-          }
-
-          const exists = confirm(`Зробити ${info.dateStr} робочим днем?\n(OK = додати, Скасувати = видалити)`);
-
-          try {
-            if (exists) {
-              await supabase.from('work_days').upsert({ date: info.dateStr });
-            } else {
-              await supabase.from('work_days').delete().eq('date', info.dateStr);
-            }
-            await fetchAndRender();
-          } catch (err) {
-            alert('Помилка збереження: ' + err.message);
-            console.error(err);
-          }
-        }
-      });
-
-      calendar.render();
-      await fetchAndRender();
-    });
-  </script>
+    <style>
+        /* Кастомні стилі для календаря */
+        .fc-event { cursor: pointer; border: none; }
+        .fc-daygrid-day.fc-day-today { background-color: #f0fdf4 !important; }
+        .work-day-event { background-color: #10b981 !important; padding: 2px 5px; border-radius: 4px; }
+    </style>
 </head>
-<body class="bg-gray-100 py-8">
-  <div class="max-w-4xl mx-auto px-4">
-    <h1 class="text-4xl font-bold text-center text-blue-700 mb-8">Мій робочий графік (Сергій)</h1>
-    
-    <div id="stats" class="bg-white rounded-2xl shadow-xl p-8 mb-8 text-center"></div>
-    
-    <div id="calendar" class="bg-white rounded-3xl shadow-2xl p-6"></div>
-  </div>
+<body class="bg-gray-50 text-gray-800 min-h-screen pb-10">
+
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-gray-900 mb-4">🗓️ Робочий календар Сергія</h1>
+            
+            <div id="stats-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 uppercase tracking-wider font-semibold">Всього робочих днів</p>
+                    <p id="total-days" class="text-3xl font-bold text-emerald-600">0</p>
+                </div>
+                <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                    <p class="text-sm text-gray-500 uppercase tracking-wider font-semibold">Детальна статистика</p>
+                    <div id="monthly-stats" class="text-sm mt-2 flex flex-wrap justify-center gap-2">
+                        </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="bg-white p-4 md:p-6 rounded-2xl shadow-lg border border-gray-100">
+            <div id="calendar"></div>
+        </div>
+
+        <footer class="mt-8 text-center text-gray-400 text-sm">
+            &copy; 2026 Робочий календар. Для редагування натисніть на дату.
+        </footer>
+    </div>
+
+    <script type="module">
+        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+
+        // Налаштування Supabase
+        const SUPABASE_URL = 'https://unyztaiglminylhbinsy.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVueXp0YWlnbG1pbnlsaGJpbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MjUwMzQsImV4cCI6MjA4OTEwMTAzNH0.aD-HFhE9XnPM_V0TBz7UJ_7lBGszSj0olz1CSkmcw_k';
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const ADMIN_PASSWORD = '2026';
+
+        // Ініціалізація календаря
+        document.addEventListener('DOMContentLoaded', async () => {
+            const calendarEl = document.getElementById('calendar');
+            
+            window.calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'uk',
+                firstDay: 1, // Понеділок
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth'
+                },
+                // Завантаження подій з Supabase
+                events: async function(fetchInfo, successCallback, failureCallback) {
+                    try {
+                        const { data, error } = await supabase
+                            .from('work_days')
+                            .select('date');
+
+                        if (error) throw error;
+
+                        const events = data.map(item => ({
+                            title: 'Робочий',
+                            start: item.date,
+                            allDay: true,
+                            className: 'work-day-event',
+                            display: 'block'
+                        }));
+                        
+                        updateStatistics(data);
+                        successCallback(events);
+                    } catch (err) {
+                        console.error('Помилка завантаження даних:', err);
+                        alert('Не вдалося завантажити дані з бази.');
+                        failureCallback(err);
+                    }
+                },
+                // Обробка кліку на дату
+                dateClick: async function(info) {
+                    const pass = prompt('Введіть пароль для редагування:');
+                    if (pass !== ADMIN_PASSWORD) {
+                        if (pass !== null) alert('Невірний пароль!');
+                        return;
+                    }
+
+                    const selectedDate = info.dateStr;
+                    
+                    // Перевіряємо, чи є вже запис на цю дату
+                    const { data } = await supabase
+                        .from('work_days')
+                        .select('date')
+                        .eq('date', selectedDate)
+                        .single();
+
+                    if (data) {
+                        // Якщо є — видаляємо
+                        if (confirm(`Видалити робочий день ${selectedDate}?`)) {
+                            const { error } = await supabase
+                                .from('work_days')
+                                .delete()
+                                .eq('date', selectedDate);
+                            
+                            if (error) console.error(error);
+                            else refreshData();
+                        }
+                    } else {
+                        // Якщо немає — додаємо
+                        const { error } = await supabase
+                            .from('work_days')
+                            .insert([{ date: selectedDate }]);
+                        
+                        if (error) console.error(error);
+                        else refreshData();
+                    }
+                }
+            });
+
+            window.calendar.render();
+        });
+
+        // Функція оновлення статистики
+        function updateStatistics(data) {
+            const totalEl = document.getElementById('total-days');
+            const monthlyEl = document.getElementById('monthly-stats');
+            
+            totalEl.innerText = data.length;
+            
+            // Групування по місяцях (YYYY-MM)
+            const stats = data.reduce((acc, curr) => {
+                const month = curr.date.substring(0, 7);
+                acc[month] = (acc[month] || 0) + 1;
+                return acc;
+            }, {});
+
+            monthlyEl.innerHTML = '';
+            Object.keys(stats).sort().reverse().forEach(month => {
+                const badge = document.createElement('span');
+                badge.className = 'bg-emerald-100 text-emerald-800 px-2 py-1 rounded-md border border-emerald-200';
+                badge.innerText = `${month}: ${stats[month]} дн.`;
+                monthlyEl.appendChild(badge);
+            });
+        }
+
+        // Функція повного оновлення календаря
+        function refreshData() {
+            window.calendar.refetchEvents();
+        }
+    </script>
 </body>
 </html>
+
