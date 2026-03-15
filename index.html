@@ -10,39 +10,42 @@
     <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales/uk.global.min.js"></script>
 
     <style>
-        .fc { max-height: 70vh; font-size: 0.85rem; }
-        @media (min-width: 768px) { .fc { font-size: 1rem; } }
-        .fc-event { border: none !important; cursor: pointer; }
-        .type-work { background-color: #10b981 !important; }    /* Зелений */
-        .type-vacation { background-color: #3b82f6 !important; } /* Синій */
-        .type-sick { background-color: #ef4444 !important; }     /* Червоний */
-        .fc-daygrid-day-number { padding: 4px !important; }
+        :root { --fc-today-bg-color: #fefce8; }
+        .fc { max-height: 75vh; font-size: 0.9rem; }
+        @media (max-width: 640px) { .fc { font-size: 0.75rem; } .fc-toolbar-title { font-size: 1.1rem !important; } }
+        .fc-event { border: none !important; cursor: pointer; transition: opacity 0.2s; }
+        .fc-event:hover { opacity: 0.8; }
+        .type-work { background-color: #10b981 !important; }
+        .type-vacation { background-color: #3b82f6 !important; }
+        .type-sick { background-color: #ef4444 !important; }
+        /* Стиль для виділення */
+        .fc-highlight { background: rgba(59, 130, 246, 0.3) !important; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 min-h-screen">
 
-    <div class="max-w-4xl mx-auto px-2 sm:px-4 py-4 sm:py-8">
+    <div class="max-w-4xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
         <div class="grid grid-cols-3 gap-2 mb-4">
-            <div class="bg-white p-2 sm:p-4 rounded-xl shadow-sm border border-emerald-100 text-center">
-                <p class="text-[10px] sm:text-xs text-emerald-600 font-bold uppercase">Робота</p>
-                <p id="stat-work" class="text-xl sm:text-2xl font-black text-emerald-700">0</p>
+            <div class="bg-white p-2 rounded-xl shadow-sm border border-emerald-100 text-center">
+                <p class="text-[10px] font-bold text-emerald-600 uppercase">Робота</p>
+                <p id="stat-work" class="text-xl font-black text-emerald-700">0</p>
             </div>
-            <div class="bg-white p-2 sm:p-4 rounded-xl shadow-sm border border-blue-100 text-center">
-                <p class="text-[10px] sm:text-xs text-blue-600 font-bold uppercase">Відпустка</p>
-                <p id="stat-vacation" class="text-xl sm:text-2xl font-black text-blue-700">0</p>
+            <div class="bg-white p-2 rounded-xl shadow-sm border border-blue-100 text-center">
+                <p class="text-[10px] font-bold text-blue-600 uppercase">Відпустка</p>
+                <p id="stat-vacation" class="text-xl font-black text-blue-700">0</p>
             </div>
-            <div class="bg-white p-2 sm:p-4 rounded-xl shadow-sm border border-red-100 text-center">
-                <p class="text-[10px] sm:text-xs text-red-600 font-bold uppercase">Лікарняні</p>
-                <p id="stat-sick" class="text-xl sm:text-2xl font-black text-red-700">0</p>
+            <div class="bg-white p-2 rounded-xl shadow-sm border border-red-100 text-center">
+                <p class="text-[10px] font-bold text-red-600 uppercase">Хвороба</p>
+                <p id="stat-sick" class="text-xl font-black text-red-700">0</p>
             </div>
         </div>
 
-        <div class="bg-white p-2 sm:p-6 rounded-2xl shadow-xl border border-slate-200">
+        <div class="bg-white p-2 sm:p-4 rounded-2xl shadow-xl border border-slate-200">
             <div id="calendar"></div>
         </div>
 
-        <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100 text-xs text-blue-800">
-            💡 <strong>Порада:</strong> Натисніть на дату, щоб змінити статус. Статистика зверху рахується лише для місяця, який ви зараз переглядаєте.
+        <div class="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-100 text-[11px] sm:text-xs text-amber-800">
+            <strong>Як користуватись:</strong> Виділіть один або кілька днів (проведіть пальцем/мишкою), щоб змінити їх статус. Статистика рахує дні тільки вибраного місяця.
         </div>
     </div>
 
@@ -55,10 +58,10 @@
         const ADMIN_PASS = '2026';
 
         const types = {
-            '1': { id: 'work', label: 'Робочий', class: 'type-work' },
-            '2': { id: 'vacation', label: 'Відпустка', class: 'type-vacation' },
-            '3': { id: 'sick', label: 'Лікарняний', class: 'type-sick' },
-            '0': { id: 'delete', label: 'Видалити запис', class: '' }
+            '1': { id: 'work', label: 'Робочий' },
+            '2': { id: 'vacation', label: 'Відпустка' },
+            '3': { id: 'sick', label: 'Лікарняний' },
+            '0': { id: 'delete', label: 'Видалити' }
         };
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -67,52 +70,76 @@
                 initialView: 'dayGridMonth',
                 locale: 'uk',
                 firstDay: 1,
-                handleWindowResize: true,
-                contentHeight: 'auto',
-                headerToolbar: {
-                    left: 'prev,next',
-                    center: 'title',
-                    right: 'today'
-                },
+                selectable: true, // Вмикаємо можливість вибору діапазону
+                unselectAuto: true,
+                headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
+                
+                datesSet: () => refreshStats(),
+                
                 events: async function(info, successCallback) {
                     const { data } = await supabase.from('work_days').select('*');
-                    
-                    // Фільтруємо дані для статистики саме за поточним видимим місяцем
-                    updateMonthStats(data, info.start, info.end);
-
-                    successCallback(data.map(d => ({
-                        title: types[Object.keys(types).find(k => types[k].id === d.type)]?.label || 'Робота',
-                        start: d.date,
-                        className: `type-${d.type}`
-                    })));
+                    if (data) {
+                        window.allFileData = data;
+                        refreshStats();
+                        successCallback(data.map(d => ({
+                            title: types[Object.keys(types).find(k => types[k].id === d.type)]?.label || 'Робота',
+                            start: d.date,
+                            allDay: true,
+                            className: `type-${d.type}`
+                        })));
+                    }
                 },
-                dateClick: async (info) => {
-                    const pass = prompt('Пароль:');
-                    if (pass !== ADMIN_PASS) return;
 
-                    const choice = prompt('Оберіть статус:\n1 - Робочий\n2 - Відпустка\n3 - Лікарняний\n0 - Видалити');
+                // Обробка вибору одного або кількох днів
+                select: async function(selectionInfo) {
+                    const pass = prompt('Пароль для редагування:');
+                    if (pass !== ADMIN_PASS) {
+                        window.calendar.unselect();
+                        return;
+                    }
+
+                    const choice = prompt('Оберіть статус для вибраних днів:\n1 - Робочий\n2 - Відпустка\n3 - Лікарняний\n0 - Видалити');
                     const selected = types[choice];
 
-                    if (!selected) return;
+                    if (!selected) {
+                        window.calendar.unselect();
+                        return;
+                    }
+
+                    // Отримуємо масив дат між початком і кінцем вибору
+                    let dates = [];
+                    let curr = new Date(selectionInfo.startStr);
+                    let end = new Date(selectionInfo.endStr);
+                    
+                    while (curr < end) {
+                        dates.push(new Date(curr).toISOString().split('T')[0]);
+                        curr.setDate(curr.getDate() + 1);
+                    }
 
                     if (selected.id === 'delete') {
-                        await supabase.from('work_days').delete().eq('date', info.dateStr);
+                        await supabase.from('work_days').delete().in('date', dates);
                     } else {
-                        await supabase.from('work_days').upsert({ date: info.dateStr, type: selected.id });
+                        const upsertData = dates.map(d => ({ date: d, type: selected.id }));
+                        await supabase.from('work_days').upsert(upsertData);
                     }
+
+                    window.calendar.unselect();
                     window.calendar.refetchEvents();
                 }
             });
             window.calendar.render();
         });
 
-        function updateMonthStats(allData, viewStart, viewEnd) {
+        function refreshStats() {
+            if (!window.allFileData || !window.calendar) return;
+            const currentViewDate = window.calendar.getDate(); 
+            const currentMonth = currentViewDate.getMonth();
+            const currentYear = currentViewDate.getFullYear();
+
             const counts = { work: 0, vacation: 0, sick: 0 };
-            
-            allData.forEach(item => {
+            window.allFileData.forEach(item => {
                 const d = new Date(item.date);
-                // Перевірка, чи входить дата в діапазон поточного вікна календаря
-                if (d >= viewStart && d < viewEnd) {
+                if (d.getMonth() === currentMonth && d.getFullYear() === currentYear) {
                     counts[item.type]++;
                 }
             });
