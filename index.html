@@ -18,6 +18,7 @@
         body.is-admin .admin-only { display: block; }
         body.is-admin .fc-highlight { background: rgba(16, 185, 129, 0.2) !important; }
         .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 700 !important; }
+        .fc-event-title { font-weight: 600; font-size: 0.75rem; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 transition-all">
@@ -35,7 +36,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                 </button>
-                <select onchange="changeLang(this.value)" id="lang-select" class="text-xs border-none bg-slate-100 rounded-xl px-2 py-2 outline-none font-semibold">
+                <select onchange="changeLang(this.value)" id="lang-select" class="text-xs border-none bg-slate-100 rounded-xl px-2 py-2 outline-none font-semibold cursor-pointer">
                     <option value="pl">PL</option>
                     <option value="uk">UA</option>
                 </select>
@@ -58,7 +59,7 @@
             </div>
         </div>
 
-        <div class="bg-white p-2 sm:p-4 rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
+        <div class="bg-white p-2 sm:p-4 rounded-3xl shadow-xl border border-slate-200 overflow-hidden font-medium">
             <div id="calendar"></div>
         </div>
 
@@ -76,14 +77,14 @@
         const i18n = {
             pl: { 
                 title: "Kalendarz: Serhii Kolomiiets", work: "Praca", vacation: "Urlop", sick: "Choroba", 
-                login: "Zaloguj", logout: "Wyloguj", hint: "Widok podglądu", hintAdmin: "Zaznacz dni, aby edytować", 
-                choice: "Wybierz:\n1-Praca, 2-Urlop, 3-Choroba, 0-Usuń", passMsg: "Hasło:",
+                login: "Zaloguj", logout: "Wyloguj", hint: "Tryb podglądu", hintAdmin: "Zaznacz dni w kalendarzu, aby edytować status", 
+                choice: "Wybierz:\n1-Praca, 2-Urlop, 3-Choroba, 0-Usuń", passMsg: "Wpisz hasło administratora:",
                 reportHeader: "Podsumowanie pracy: Serhii Kolomiiets", reportCopied: "Raport skopiowany do schowka!"
             },
             uk: { 
                 title: "Календар: Сергій Коломієць", work: "Робота", vacation: "Відпустка", sick: "Хвороба", 
-                login: "Увійти", logout: "Вийти", hint: "Режим перегляду", hintAdmin: "Виділіть дні для редагування", 
-                choice: "Оберіть:\n1-Робота, 2-Відпустка, 3-Хвороба, 0-Видалити", passMsg: "Пароль:",
+                login: "Увійти", logout: "Вийти", hint: "Режим перегляду", hintAdmin: "Виділіть дні в календарі для редагування", 
+                choice: "Оберіть:\n1-Робота, 2-Відпустка, 3-Хвороба, 0-Видалити", passMsg: "Введіть пароль адміністратора:",
                 reportHeader: "Звіт по роботі: Сергій Коломієць", reportCopied: "Звіт скопійовано!"
             }
         };
@@ -91,7 +92,6 @@
         let currentLang = 'pl';
         let isAdmin = localStorage.getItem('isSergAdmin') === 'true';
 
-        // Генерація звіту
         window.generateReport = () => {
             const date = window.calendar.getDate();
             const monthName = date.toLocaleString(currentLang, { month: 'long', year: 'numeric' });
@@ -107,11 +107,17 @@
         };
 
         window.handleAuth = () => {
-            if (isAdmin) { localStorage.removeItem('isSergAdmin'); location.reload(); }
-            else {
+            if (isAdmin) {
+                localStorage.removeItem('isSergAdmin');
+                location.reload();
+            } else {
                 const p = prompt(i18n[currentLang].passMsg);
-                if (p === ADMIN_PASS) { localStorage.setItem('isSergAdmin', 'true'); location.reload(); }
-                else if(p !== null) alert("Error!");
+                if (p === ADMIN_PASS) {
+                    localStorage.setItem('isSergAdmin', 'true');
+                    location.reload();
+                } else if(p !== null) {
+                    alert("Error!");
+                }
             }
         };
 
@@ -123,12 +129,16 @@
             document.getElementById('label-sick').innerText = i18n[lang].sick;
             document.getElementById('login-btn').innerText = isAdmin ? i18n[lang].logout : i18n[lang].login;
             document.getElementById('hint-box').innerText = isAdmin ? i18n[lang].hintAdmin : i18n[lang].hint;
-            window.calendar.setOption('locale', lang);
-            window.calendar.refetchEvents();
+            
+            if (window.calendar) {
+                window.calendar.setOption('locale', lang);
+                window.calendar.refetchEvents();
+            }
         };
 
         document.addEventListener('DOMContentLoaded', () => {
             if (isAdmin) document.body.classList.add('is-admin');
+            
             const calendarEl = document.getElementById('calendar');
             window.calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
@@ -154,15 +164,25 @@
                     const typesMap = { '1': 'work', '2': 'vacation', '3': 'sick', '0': 'delete' };
                     const typeKey = typesMap[choice];
                     if (!typeKey) { window.calendar.unselect(); return; }
+
                     let dates = [];
                     let curr = new Date(selectionInfo.start);
                     let end = new Date(selectionInfo.end);
+                    
                     while (curr < end) {
-                        dates.push(curr.toISOString().split('T')[0]);
+                        // ФІКС ДАТИ: використовуємо локальні значення, а не UTC
+                        const yyyy = curr.getFullYear();
+                        const mm = String(curr.getMonth() + 1).padStart(2, '0');
+                        const dd = String(curr.getDate()).padStart(2, '0');
+                        dates.push(`${yyyy}-${mm}-${dd}`);
                         curr.setDate(curr.getDate() + 1);
                     }
-                    if (typeKey === 'delete') await supabase.from('work_days').delete().in('date', dates);
-                    else await supabase.from('work_days').upsert(dates.map(d => ({ date: d, type: typeKey })));
+
+                    if (typeKey === 'delete') {
+                        await supabase.from('work_days').delete().in('date', dates);
+                    } else {
+                        await supabase.from('work_days').upsert(dates.map(d => ({ date: d, type: typeKey })));
+                    }
                     window.calendar.unselect();
                     window.calendar.refetchEvents();
                 }
