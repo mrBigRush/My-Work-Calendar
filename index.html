@@ -3,57 +3,66 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kalendarz pracy Serhii Kolomiiets</title>
+    <title>Kalendarz Pracy | Serhii Kolomiiets</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales-all.global.min.js"></script>
 
     <style>
-        :root { --fc-today-bg-color: #fefce8; }
-        .fc { max-height: 75vh; font-size: 0.9rem; }
-        @media (max-width: 640px) { .fc { font-size: 0.75rem; } .fc-toolbar-title { font-size: 1.1rem !important; } }
-        .fc-event { border: none !important; cursor: pointer; }
-        .type-work { background-color: #10b981 !important; }
-        .type-vacation { background-color: #3b82f6 !important; }
-        .type-sick { background-color: #ef4444 !important; }
-        .fc-highlight { background: rgba(59, 130, 246, 0.3) !important; }
-        .lang-btn.active { background-color: #1e293b; color: white; }
+        .fc { max-height: 70vh; font-size: 0.9rem; }
+        .type-work { background-color: #10b981 !important; border-radius: 4px; border: none !important; }
+        .type-vacation { background-color: #3b82f6 !important; border-radius: 4px; border: none !important; }
+        .type-sick { background-color: #ef4444 !important; border-radius: 4px; border: none !important; }
+        .admin-only { display: none; }
+        body.is-admin .admin-only { display: block; }
+        body.is-admin .fc-highlight { background: rgba(16, 185, 129, 0.2) !important; }
+        .fc-toolbar-title { font-size: 1.1rem !important; font-weight: 700 !important; }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-900 min-h-screen">
+<body class="bg-slate-50 text-slate-900 transition-all">
 
-    <div class="max-w-4xl mx-auto px-2 sm:px-4 py-4 sm:py-6">
-        <div class="flex justify-between items-center mb-6">
-            <h1 id="main-title" class="text-xl font-bold text-slate-800">Kalendarz Pracy</h1>
-            <div class="flex gap-2 bg-white p-1 rounded-lg shadow-sm border border-slate-200">
-                <button onclick="changeLang('pl')" id="btn-pl" class="lang-btn px-3 py-1 text-xs rounded-md font-bold active">PL</button>
-                <button onclick="changeLang('uk')" id="btn-uk" class="lang-btn px-3 py-1 text-xs rounded-md font-bold">UA</button>
+    <div class="max-w-4xl mx-auto px-2 py-4 sm:py-6">
+        <div class="flex justify-between items-center mb-6 bg-white p-3 rounded-2xl shadow-sm border border-slate-200">
+            <div>
+                <h1 id="main-title" class="text-base sm:text-lg font-bold text-slate-800 leading-tight">Serhii Kolomiiets</h1>
+                <span id="admin-badge" class="admin-only text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">Admin</span>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <button onclick="generateReport()" class="bg-blue-50 text-blue-600 p-2 rounded-xl hover:bg-blue-100 transition" title="Report">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                </button>
+                <select onchange="changeLang(this.value)" id="lang-select" class="text-xs border-none bg-slate-100 rounded-xl px-2 py-2 outline-none font-semibold">
+                    <option value="pl">PL</option>
+                    <option value="uk">UA</option>
+                </select>
+                <button id="login-btn" onclick="handleAuth()" class="text-xs font-bold px-4 py-2 rounded-xl bg-slate-800 text-white hover:bg-slate-700 transition">Login</button>
             </div>
         </div>
 
-        <div class="grid grid-cols-3 gap-2 mb-4">
-            <div class="bg-white p-2 rounded-xl shadow-sm border border-emerald-100 text-center">
-                <p id="label-work" class="text-[10px] font-bold text-emerald-600 uppercase">Praca</p>
-                <p id="stat-work" class="text-xl font-black text-emerald-700">0</p>
+        <div class="grid grid-cols-3 gap-2 mb-4 text-center font-bold uppercase tracking-tighter">
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-emerald-100">
+                <p id="label-work" class="text-[10px] text-emerald-600">Praca</p>
+                <p id="stat-work" class="text-2xl text-emerald-700">0</p>
             </div>
-            <div class="bg-white p-2 rounded-xl shadow-sm border border-blue-100 text-center">
-                <p id="label-vacation" class="text-[10px] font-bold text-blue-600 uppercase">Urlop</p>
-                <p id="stat-vacation" class="text-xl font-black text-blue-700">0</p>
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-blue-100">
+                <p id="label-vacation" class="text-[10px] text-blue-600">Urlop</p>
+                <p id="stat-vacation" class="text-2xl text-blue-700">0</p>
             </div>
-            <div class="bg-white p-2 rounded-xl shadow-sm border border-red-100 text-center">
-                <p id="label-sick" class="text-[10px] font-bold text-red-600 uppercase">Choroba</p>
-                <p id="stat-sick" class="text-xl font-black text-red-700">0</p>
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-red-100">
+                <p id="label-sick" class="text-[10px] text-red-600">Choroba</p>
+                <p id="stat-sick" class="text-2xl text-red-700">0</p>
             </div>
         </div>
 
-        <div class="bg-white p-2 sm:p-4 rounded-2xl shadow-xl border border-slate-200">
+        <div class="bg-white p-2 sm:p-4 rounded-3xl shadow-xl border border-slate-200 overflow-hidden">
             <div id="calendar"></div>
         </div>
 
-        <div id="hint-box" class="mt-4 p-3 bg-slate-100 rounded-lg text-[11px] text-slate-600">
-            Zaznacz dni, aby zmienić status. Statystyki dotyczą wybranego miesiąca.
-        </div>
+        <p id="hint-box" class="mt-4 text-center text-slate-400 text-[11px] italic"></p>
     </div>
 
     <script type="module">
@@ -65,81 +74,86 @@
         const ADMIN_PASS = '2026';
 
         const i18n = {
-            pl: {
-                title: "Kalendarz pracy Serhii Kolomiiets",
-                work: "Praca", vacation: "Urlop", sick: "Choroba", delete: "Usuń",
-                promptPass: "Wpisz hasło:", promptChoice: "Wybierz status:\n1 - Praca\n2 - Urlop\n3 - Choroba\n0 - Usuń",
-                hint: "Na razie testowane pole.",
-                today: "Dzisiaj"
+            pl: { 
+                title: "Kalendarz: Serhii Kolomiiets", work: "Praca", vacation: "Urlop", sick: "Choroba", 
+                login: "Zaloguj", logout: "Wyloguj", hint: "Widok podglądu", hintAdmin: "Zaznacz dni, aby edytować", 
+                choice: "Wybierz:\n1-Praca, 2-Urlop, 3-Choroba, 0-Usuń", passMsg: "Hasło:",
+                reportHeader: "Podsumowanie pracy: Serhii Kolomiiets", reportCopied: "Raport skopiowany do schowka!"
             },
-            uk: {
-                title: "Робочий календар Сергія",
-                work: "Робота", vacation: "Відпустка", sick: "Лікарняний", delete: "Видалити",
-                promptPass: "Введіть пароль:", promptChoice: "Оберіть статус:\n1 - Робочий\n2 - Відпустка\n3 - Лікарняний\n0 - Видалити",
-                hint: "Тестове поле",
-                today: "Сьогодні"
+            uk: { 
+                title: "Календар: Сергій Коломієць", work: "Робота", vacation: "Відпустка", sick: "Хвороба", 
+                login: "Увійти", logout: "Вийти", hint: "Режим перегляду", hintAdmin: "Виділіть дні для редагування", 
+                choice: "Оберіть:\n1-Робота, 2-Відпустка, 3-Хвороба, 0-Видалити", passMsg: "Пароль:",
+                reportHeader: "Звіт по роботі: Сергій Коломієць", reportCopied: "Звіт скопійовано!"
             }
         };
 
         let currentLang = 'pl';
+        let isAdmin = localStorage.getItem('isSergAdmin') === 'true';
+
+        // Генерація звіту
+        window.generateReport = () => {
+            const date = window.calendar.getDate();
+            const monthName = date.toLocaleString(currentLang, { month: 'long', year: 'numeric' });
+            const w = document.getElementById('stat-work').innerText;
+            const v = document.getElementById('stat-vacation').innerText;
+            const s = document.getElementById('stat-sick').innerText;
+
+            const report = `📊 ${i18n[currentLang].reportHeader}\n📅 ${monthName}\n------------------\n✅ ${i18n[currentLang].work}: ${w}\n🌴 ${i18n[currentLang].vacation}: ${v}\n🏥 ${i18n[currentLang].sick}: ${s}`;
+            
+            navigator.clipboard.writeText(report).then(() => {
+                alert(i18n[currentLang].reportCopied + "\n\n" + report);
+            });
+        };
+
+        window.handleAuth = () => {
+            if (isAdmin) { localStorage.removeItem('isSergAdmin'); location.reload(); }
+            else {
+                const p = prompt(i18n[currentLang].passMsg);
+                if (p === ADMIN_PASS) { localStorage.setItem('isSergAdmin', 'true'); location.reload(); }
+                else if(p !== null) alert("Error!");
+            }
+        };
 
         window.changeLang = (lang) => {
             currentLang = lang;
-            document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById(`btn-${lang}`).classList.add('active');
-            
-            // Оновлення тексту
             document.getElementById('main-title').innerText = i18n[lang].title;
             document.getElementById('label-work').innerText = i18n[lang].work;
             document.getElementById('label-vacation').innerText = i18n[lang].vacation;
             document.getElementById('label-sick').innerText = i18n[lang].sick;
-            document.getElementById('hint-box').innerText = i18n[lang].hint;
-
-            // Оновлення календаря
+            document.getElementById('login-btn').innerText = isAdmin ? i18n[lang].logout : i18n[lang].login;
+            document.getElementById('hint-box').innerText = isAdmin ? i18n[lang].hintAdmin : i18n[lang].hint;
             window.calendar.setOption('locale', lang);
-            window.calendar.setOption('buttonText', { today: i18n[lang].today });
             window.calendar.refetchEvents();
         };
 
-        const types = {
-            '1': 'work',
-            '2': 'vacation',
-            '3': 'sick',
-            '0': 'delete'
-        };
-
         document.addEventListener('DOMContentLoaded', () => {
+            if (isAdmin) document.body.classList.add('is-admin');
             const calendarEl = document.getElementById('calendar');
             window.calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
-                locale: 'pl',
+                locale: currentLang,
                 firstDay: 1,
-                selectable: true,
+                selectable: isAdmin,
                 headerToolbar: { left: 'prev,next', center: 'title', right: 'today' },
-                
                 datesSet: () => refreshStats(),
-                
                 events: async function(info, successCallback) {
                     const { data } = await supabase.from('work_days').select('*');
                     window.allFileData = data || [];
                     refreshStats();
                     successCallback(window.allFileData.map(d => ({
-                        title: i18n[currentLang][d.type],
+                        title: i18n[currentLang][d.type] || d.type,
                         start: d.date,
                         allDay: true,
                         className: `type-${d.type}`
                     })));
                 },
-
                 select: async function(selectionInfo) {
-                    const pass = prompt(i18n[currentLang].promptPass);
-                    if (pass !== ADMIN_PASS) { window.calendar.unselect(); return; }
-
-                    const choice = prompt(i18n[currentLang].promptChoice);
-                    const typeKey = types[choice];
-
+                    if (!isAdmin) return;
+                    const choice = prompt(i18n[currentLang].choice);
+                    const typesMap = { '1': 'work', '2': 'vacation', '3': 'sick', '0': 'delete' };
+                    const typeKey = typesMap[choice];
                     if (!typeKey) { window.calendar.unselect(); return; }
-
                     let dates = [];
                     let curr = new Date(selectionInfo.start);
                     let end = new Date(selectionInfo.end);
@@ -147,35 +161,25 @@
                         dates.push(curr.toISOString().split('T')[0]);
                         curr.setDate(curr.getDate() + 1);
                     }
-
-                    if (typeKey === 'delete') {
-                        await supabase.from('work_days').delete().in('date', dates);
-                    } else {
-                        await supabase.from('work_days').upsert(dates.map(d => ({ date: d, type: typeKey })));
-                    }
-
+                    if (typeKey === 'delete') await supabase.from('work_days').delete().in('date', dates);
+                    else await supabase.from('work_days').upsert(dates.map(d => ({ date: d, type: typeKey })));
                     window.calendar.unselect();
                     window.calendar.refetchEvents();
                 }
             });
             window.calendar.render();
-            window.changeLang('pl'); // Встановлюємо польську при старті
+            window.changeLang(currentLang);
         });
 
         function refreshStats() {
             if (!window.allFileData || !window.calendar) return;
             const viewDate = window.calendar.getDate(); 
-            const m = viewDate.getMonth();
-            const y = viewDate.getFullYear();
-
+            const m = viewDate.getMonth(), y = viewDate.getFullYear();
             const counts = { work: 0, vacation: 0, sick: 0 };
             window.allFileData.forEach(item => {
                 const d = new Date(item.date);
-                if (d.getMonth() === m && d.getFullYear() === y) {
-                    counts[item.type]++;
-                }
+                if (d.getMonth() === m && d.getFullYear() === y) counts[item.type]++;
             });
-
             document.getElementById('stat-work').innerText = counts.work;
             document.getElementById('stat-vacation').innerText = counts.vacation;
             document.getElementById('stat-sick').innerText = counts.sick;
