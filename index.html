@@ -564,7 +564,7 @@ window.saveDay = async()=>{
             await supabase.from('driving_days').upsert({
                 date:editingDates[0], start_time:s, end_time:e, driving_hours:dr,
                 used_extended_10:e10, used_extended_15:e15, short_breaks_count:dBreaks
-            });
+            }, { onConflict: 'date' });
         }
     }
     closeModal('modal-day');
@@ -694,7 +694,7 @@ window.saveTacho = async()=>{
         used_extended_10:document.getElementById('t-tog-10').classList.contains('on'),
         used_extended_15:document.getElementById('t-tog-15').classList.contains('on'),
         short_breaks_count:tBreaks,
-    });
+    }, { onConflict: 'date' });
     closeModal('modal-tacho');
     toast(i18n[lang].save+' ✓');
     renderTachoWeek();
