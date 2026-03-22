@@ -26,6 +26,8 @@ body { background: var(--bg); color: var(--text); font-family: var(--sans); min-
 .type-vacation { background-color: var(--blue)   !important; border: none !important; border-radius: 3px; }
 .type-sick     { background-color: var(--red)    !important; border: none !important; border-radius: 3px; }
 .fc-event-title { font-family: var(--mono); font-size: 0.65rem; font-weight: 600; }
+.fc-event { cursor: pointer !important; pointer-events: none; }
+.fc-daygrid-day { cursor: pointer; }
 .fc-daygrid-day { position: relative; }
 .fc-daygrid-day.has-tacho::after { content: '🚛'; font-size: 0.5rem; position: absolute; bottom: 2px; right: 3px; line-height: 1; pointer-events: none; }
 
