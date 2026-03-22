@@ -177,7 +177,7 @@ async function openTachoModal(dateStr, existing, getLang) {
     document.getElementById('t-inp-end').value     = existing?.end_time?.slice(0, 5) || '';
     document.getElementById('t-inp-driving').value = existing?.driving_hours
         ? decimalToTime(parseFloat(existing.driving_hours)) : '';
-    setToggle('t-tog-9h', !!existing?.reduced_rest_9h);
+    setToggle('t-tog-9h', !!existing?.reduced_rest_9h); // залишаємо для відображення але не зберігаємо вручну
 
     document.getElementById('t-btn-delete').style.display = existing ? '' : 'none';
     updateAutoInfo('t', getLang);
@@ -194,14 +194,12 @@ export async function saveTacho(getLang) {
     const { ext10, ext15, reduced_rest_9h, restHours } =
         calcDayAuto(drTime, s, e, prevEnd);
 
-    const r9h = document.getElementById('t-tog-9h').classList.contains('on') || reduced_rest_9h;
-
     await supabase.from('driving_days').upsert({
         date: editingTachoDate,
         start_time: s, end_time: e,
         driving_hours: timeToDecimal(drTime),
         used_extended_10: ext10, used_extended_15: ext15,
-        reduced_rest_9h: r9h,
+        reduced_rest_9h: reduced_rest_9h,
         rest_hours: restHours !== null ? parseFloat(restHours.toFixed(2)) : null,
         short_breaks_count: 0,
     }, { onConflict: 'date' });

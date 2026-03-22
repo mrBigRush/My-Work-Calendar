@@ -135,7 +135,7 @@ export async function saveDay(getLang) {
             calcDayAuto(drTime, s, e, prevEnd);
 
         const dr = timeToDecimal(drTime);
-        const r9h = document.getElementById('d-tog-9h').classList.contains('on') || reduced_rest_9h;
+        const r9h = reduced_rest_9h;
 
         if (s || e || dr > 0 || ext10 || ext15 || r9h) {
             await supabase.from('driving_days').upsert({
@@ -221,8 +221,18 @@ function refreshStats() {
 export function generateReport(getLang) {
     const lang = getLang();
     const date = window.calendar.getDate();
-    const mn = date.toLocaleString(lang, { month: 'long', year: 'numeric' });
+    const monthName = date.toLocaleString('pl', { month: 'long', year: 'numeric' });
     const t = i18n[lang];
-    const r = `📊 ${t.reportHeader}\n📅 ${mn}\n------------------\n✅ ${t.work}: ${document.getElementById('stat-work').innerText}\n🌴 ${t.vacation}: ${document.getElementById('stat-vacation').innerText}\n🏥 ${t.sick}: ${document.getElementById('stat-sick').innerText}`;
-    navigator.clipboard.writeText(r).then(() => showToast(t.reportCopied));
+    const w = document.getElementById('stat-work').innerText;
+    const v = document.getElementById('stat-vacation').innerText;
+    const s = document.getElementById('stat-sick').innerText;
+
+    // Завжди польською для SMS до дирекції
+    const report =
+        `Dzień dobry! Przesyłam podsumowanie za ${monthName} pracownika Serhii Kolomiiets:\n` +
+        `✅ Dni pracy: ${w}\n` +
+        `🌴 Urlop: ${v}\n` +
+        `🏥 Choroba: ${s}`;
+
+    navigator.clipboard.writeText(report).then(() => showToast(t.reportCopied));
 }
