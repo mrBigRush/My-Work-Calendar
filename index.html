@@ -623,7 +623,7 @@ async function renderTachoWeek(){
     document.getElementById('week-end-label').innerText=`→ ${fmt(parseLocal(we))}`;
 
     const weekDates=[]; for(let i=0;i<7;i++) weekDates.push(addDays(ws,i));
-    const wd=all.filter(r=>weekDates.includes(r.date));
+    const wd=all.filter(r=> weekDates.includes(r.date?.slice(0,10)));
 
     const totalDr=wd.reduce((s,r)=>s+(parseFloat(r.driving_hours)||0),0);
     const e10=wd.filter(r=>r.used_extended_10).length;
@@ -637,7 +637,7 @@ async function renderTachoWeek(){
 
     const list=document.getElementById('days-list'); list.innerHTML='';
     weekDates.forEach(ds=>{
-        const d=parseLocal(ds); const rec=wd.find(r=>r.date===ds);
+        const d=parseLocal(ds); const rec=wd.find(r=>r.date?.slice(0,10)===ds);
         const dn=t.dayNames[d.getDay()];
         const row=document.createElement('div');
         row.className='day-row'+(rec?' has-data':'')+(isAdmin?' clickable':'');
@@ -662,10 +662,15 @@ async function renderTachoWeek(){
 
 function setBar(id,val,max,label){
     const pct=Math.min((val/max)*100,100);
-    document.getElementById(`bar-${id}`).style.width=pct+'%';
+    const bar=document.getElementById(`bar-${id}`);
     const el=document.getElementById(`val-${id}`);
-    el.textContent=label;
-    el.className='stat-label '+(pct>=100?'danger':pct>=75?'warn':'ok');
+    if(!bar||!el) return;
+    bar.style.width=pct+'%';
+    el.innerText=label;
+    el.style.color=pct>=100?'var(--red)':pct>=75?'var(--orange)':'var(--accent)';
+    el.style.fontFamily='var(--mono)';
+    el.style.fontSize='0.6rem';
+    el.style.fontWeight='600';
 }
 
 // ── Tacho-only modal ──────────────────────────────────
