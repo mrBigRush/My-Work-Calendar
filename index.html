@@ -534,7 +534,7 @@ async function loadTachoIntoDay(dateStr){
     document.getElementById('d-inp-driving').value= data?.driving_hours ? decimalToTime(parseFloat(data.driving_hours)) : '';
     setToggle('d-tog-10',!!data?.used_extended_10);
     setToggle('d-tog-15',!!data?.used_extended_15);
-    setToggle('d-tog-9h',false);
+    setToggle('d-tog-9h',!!data?.reduced_rest_9h);
     dBreaks=data?.short_breaks_count||0;
     document.getElementById('d-val-breaks').innerText=dBreaks;
 }
@@ -560,10 +560,12 @@ window.saveDay = async()=>{
         const dr=timeToDecimal(drTime);
         const e10=document.getElementById('d-tog-10').classList.contains('on');
         const e15=document.getElementById('d-tog-15').classList.contains('on');
-        if(s||e||dr>0||e10||e15||dBreaks>0){
+        const r9h=document.getElementById('d-tog-9h').classList.contains('on');
+        if(s||e||dr>0||e10||e15||r9h||dBreaks>0){
             await supabase.from('driving_days').upsert({
                 date:editingDates[0], start_time:s, end_time:e, driving_hours:dr,
-                used_extended_10:e10, used_extended_15:e15, short_breaks_count:dBreaks
+                used_extended_10:e10, used_extended_15:e15,
+                reduced_rest_9h:r9h, short_breaks_count:dBreaks
             }, { onConflict: 'date' });
         }
     }
@@ -628,7 +630,7 @@ async function renderTachoWeek(){
     const totalDr=wd.reduce((s,r)=>s+(parseFloat(r.driving_hours)||0),0);
     const e10=wd.filter(r=>r.used_extended_10).length;
     const e15=wd.filter(r=>r.used_extended_15).length;
-    const sr=wd.reduce((s,r)=>s+(parseInt(r.short_breaks_count)||0),0);
+    const sr=wd.filter(r=>r.reduced_rest_9h).length;
 
     setBar('driving',totalDr,56,`${totalDr.toFixed(1)}/56h`);
     setBar('ext10',e10,2,`${e10}/2`);
@@ -649,7 +651,8 @@ async function renderTachoWeek(){
             const badges=[];
             if(rec.used_extended_10) badges.push(`<span class="badge badge-10">+10h</span>`);
             if(rec.used_extended_15) badges.push(`<span class="badge badge-15">+15h</span>`);
-            if(rec.short_breaks_count>0) badges.push(`<span class="badge badge-9h">${rec.short_breaks_count}×45'</span>`);
+            if(rec.reduced_rest_9h)  badges.push(`<span class="badge badge-9h">9h↓</span>`);
+            if(rec.short_breaks_count>0) badges.push(`<span class="badge" style="background:var(--bg);color:var(--muted)">${rec.short_breaks_count}×45'</span>`);
             const dh=parseFloat(rec.driving_hours)||0;
             right=`<div class="text-right">${ts?`<p class="day-hours">${ts}</p>`:''}${dh>0?`<p class="text-[10px] text-[var(--muted)]" style="font-family:var(--mono)">🚗 ${dh}h</p>`:''}${badges.length?`<div class="flex gap-1 justify-end mt-1">${badges.join('')}</div>`:''}</div>`;
         } else if(isAdmin){
@@ -683,7 +686,7 @@ function openTachoModal(dateStr,existing){
     document.getElementById('t-inp-driving').value= existing?.driving_hours ? decimalToTime(parseFloat(existing.driving_hours)) : '';
     setToggle('t-tog-10',!!existing?.used_extended_10);
     setToggle('t-tog-15',!!existing?.used_extended_15);
-    setToggle('t-tog-9h',false);
+    setToggle('t-tog-9h',!!existing?.reduced_rest_9h);
     tBreaks=existing?.short_breaks_count||0;
     document.getElementById('t-val-breaks').innerText=tBreaks;
     document.getElementById('t-btn-delete').style.display=existing?'':'none';
@@ -698,6 +701,7 @@ window.saveTacho = async()=>{
         driving_hours:timeToDecimal(document.getElementById('t-inp-driving').value),
         used_extended_10:document.getElementById('t-tog-10').classList.contains('on'),
         used_extended_15:document.getElementById('t-tog-15').classList.contains('on'),
+        reduced_rest_9h:document.getElementById('t-tog-9h').classList.contains('on'),
         short_breaks_count:tBreaks,
     }, { onConflict: 'date' });
     closeModal('modal-tacho');
