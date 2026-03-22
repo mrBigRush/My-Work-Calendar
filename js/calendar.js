@@ -70,7 +70,14 @@ async function openDayModal(primaryDate, isMulti, getLang) {
     selectChip(existing?.type || null, true);
 
     document.getElementById('day-tacho-section').style.display = 'none';
-    if (!isMulti) await loadTachoIntoDay(primaryDate, getLang);
+
+    if (!isMulti) {
+        await loadTachoIntoDay(primaryDate, getLang);
+        // Show tacho section AFTER fields are populated
+        if (editingDayType === 'work') {
+            document.getElementById('day-tacho-section').style.display = '';
+        }
+    }
 
     document.getElementById('d-btn-delete').style.display = existing ? '' : 'none';
     openModal('modal-day');
@@ -80,19 +87,20 @@ async function loadTachoIntoDay(dateStr, getLang) {
     const { data } = await supabase.from('driving_days')
         .select('*').eq('date', dateStr).maybeSingle();
 
-    // Load previous day's end_time for rest calculation
     const prevDate = addDays(dateStr, -1);
     const { data: prevData } = await supabase.from('driving_days')
         .select('end_time').eq('date', prevDate).maybeSingle();
 
+    // First set prevEnd on the input so calcDayAuto can read it
+    document.getElementById('d-inp-start').dataset.prevEnd = prevData?.end_time?.slice(0, 5) || '';
+
+    // Then populate fields
     document.getElementById('d-inp-start').value   = data?.start_time?.slice(0, 5) || '';
     document.getElementById('d-inp-end').value     = data?.end_time?.slice(0, 5) || '';
     document.getElementById('d-inp-driving').value = data?.driving_hours ? decimalToTime(parseFloat(data.driving_hours)) : '';
     setToggle('d-tog-9h', !!data?.reduced_rest_9h);
 
-    // Store prev end time for auto-calc
-    document.getElementById('d-inp-start').dataset.prevEnd = prevData?.end_time?.slice(0, 5) || '';
-
+    // Call AFTER all fields are populated
     updateAutoInfo('d', getLang);
 }
 

@@ -170,13 +170,14 @@ async function openTachoModal(dateStr, existing, getLang) {
     const { data: prevData } = await supabase.from('driving_days')
         .select('end_time').eq('date', prevDate).maybeSingle();
 
+    // Set prevEnd FIRST, then populate fields
+    document.getElementById('t-inp-start').dataset.prevEnd = prevData?.end_time?.slice(0, 5) || '';
+
     document.getElementById('t-inp-start').value   = existing?.start_time?.slice(0, 5) || '';
     document.getElementById('t-inp-end').value     = existing?.end_time?.slice(0, 5) || '';
     document.getElementById('t-inp-driving').value = existing?.driving_hours
         ? decimalToTime(parseFloat(existing.driving_hours)) : '';
     setToggle('t-tog-9h', !!existing?.reduced_rest_9h);
-
-    document.getElementById('t-inp-start').dataset.prevEnd = prevData?.end_time?.slice(0, 5) || '';
 
     document.getElementById('t-btn-delete').style.display = existing ? '' : 'none';
     updateAutoInfo('t', getLang);
