@@ -20,8 +20,9 @@
             <span id="admin-badge" style="display:none" class="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider inline-block">Admin</span>
         </div>
         <div class="flex items-center gap-2">
-            <button id="report-btn" onclick="window._generateReport()" class="bg-[var(--blue-light)] text-[var(--blue)] p-2 rounded-xl hover:opacity-80 transition" title="Report">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <button id="report-btn" onclick="window._generateReport()" class="flex items-center gap-1.5 bg-[var(--blue-light)] text-[var(--blue)] px-3 py-2 rounded-xl hover:opacity-80 transition text-xs font-bold" style="font-family:var(--mono)" title="Report">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span id="report-btn-lbl">Raport</span>
             </button>
             <select onchange="window._changeLang(this.value)" id="lang-select" class="text-xs border-none bg-[var(--bg)] rounded-xl px-2 py-2 outline-none font-semibold cursor-pointer" style="font-family:var(--mono)">
                 <option value="pl">PL</option>
@@ -144,17 +145,8 @@
             <label class="field-label" id="d-lbl-driving">Godziny jazdy</label>
             <input type="time" id="d-inp-driving" class="field-input" oninput="window._autoCalcDay()">
         </div>
-        <div id="d-auto-info" class="rounded-xl p-3 mb-3 text-xs" style="background:var(--bg);font-family:var(--mono);display:none;line-height:1.8">
+        <div id="d-auto-info" class="rounded-xl p-3 mb-1 text-xs" style="background:var(--bg);font-family:var(--mono);display:none;line-height:1.8">
             <p id="d-auto-text"></p>
-        </div>
-        <div class="border border-[var(--border)] rounded-xl overflow-hidden mb-1">
-            <div class="toggle-row">
-                <div>
-                    <p class="toggle-label" id="d-lbl-9h">Skrócony odpoczynek (9h)</p>
-                    <p class="toggle-desc"  id="d-desc-9h">auto lub ręcznie</p>
-                </div>
-                <div class="toggle" id="d-tog-9h" onclick="this.classList.toggle('on')"></div>
-            </div>
         </div>
     </div>
 
@@ -186,15 +178,6 @@
     <div id="t-auto-info" class="rounded-xl p-3 mb-3 text-xs" style="background:var(--bg);font-family:var(--mono);display:none;line-height:1.8">
         <p id="t-auto-text"></p>
     </div>
-    <div class="border border-[var(--border)] rounded-xl overflow-hidden mb-3">
-        <div class="toggle-row">
-            <div>
-                <p class="toggle-label" id="t-lbl-9h">Skrócony odpoczynek (9h)</p>
-                <p class="toggle-desc"  id="t-desc-9h">auto lub ręcznie</p>
-            </div>
-            <div class="toggle" id="t-tog-9h" onclick="this.classList.toggle('on')"></div>
-        </div>
-    </div>
     <div class="grid grid-cols-2 gap-2 mb-2">
         <button onclick="window._saveTacho()" class="btn-primary"  id="t-btn-save">Zapisz</button>
         <button onclick="window._closeModal('modal-tacho')" class="btn-secondary" id="t-btn-cancel">Anuluj</button>
@@ -204,11 +187,10 @@
 </div>
 
 <!-- ══════════════════════════════════════════
-     MODAL: Login
+     MODAL: Login  (прикріплено до верху)
 ══════════════════════════════════════════ -->
-<div id="modal-login" class="modal-backdrop">
-  <div class="modal">
-    <div class="modal-handle"></div>
+<div id="modal-login" class="modal-backdrop" style="align-items:flex-start;padding-top:3rem">
+  <div class="modal" style="border-radius:0 0 20px 20px;max-width:480px">
     <p id="lbl-login-title" class="modal-title">Logowanie</p>
     <p id="lbl-login-desc" class="text-sm text-[var(--muted)] mb-4">Wpisz hasło administratora</p>
     <input type="password" id="login-inp" class="field-input mb-3 text-center tracking-widest" placeholder="••••" maxlength="20" style="font-family:var(--mono);font-size:1rem">
@@ -278,15 +260,14 @@ window._changeLang = (l) => {
     set('label-work', t.work); set('label-vacation', t.vacation); set('label-sick', t.sick);
     set('login-btn', isAdmin ? t.logout : t.login);
     set('hint-box', isAdmin ? t.hintAdmin : t.hint);
+    set('report-btn-lbl', t.reportBtn);
     document.querySelector('.tab-lbl-cal').innerText   = t.tabCal;
     document.querySelector('.tab-lbl-tacho').innerText = t.tabTacho;
     set('lbl-sec-type', t.secType); set('lbl-sec-tacho', t.secTacho);
     set('chip-work-lbl', t.work); set('chip-vacation-lbl', t.vacation); set('chip-sick-lbl', t.sick);
     set('d-lbl-start', t.start); set('d-lbl-end', t.end); set('d-lbl-driving', t.driving);
-    set('d-lbl-9h', t.tog9h); set('d-desc-9h', t.desc9h);
     set('d-btn-save', t.save); set('d-btn-cancel', t.cancel); set('d-lbl-delete', t.deleteDay);
     set('t-lbl-start', t.start); set('t-lbl-end', t.end); set('t-lbl-driving', t.driving);
-    set('t-lbl-9h', t.tog9h); set('t-desc-9h', t.desc9h);
     set('t-btn-save', t.save); set('t-btn-cancel', t.cancel); set('t-lbl-delete', t.deleteDay);
     set('tacho-stats-title', t.weekStats);
     set('lbl-driving-hours', t.drivingH); set('lbl-ext10', t.ext10);
