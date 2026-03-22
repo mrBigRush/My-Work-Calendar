@@ -47,7 +47,9 @@ export function decimalToTime(v) {
  * @returns {{ ext10, ext15, reduced_rest_9h, restHours, restType }}
  */
 export function calcDayAuto(drivingTime, startTime, endTime, prevEndTime) {
-    const driving = timeToDecimal(drivingTime);
+    alert(`driving: ${drivingTime}\nstart: ${startTime}\nend: ${endTime}\nprevEnd: ${prevEndTime}`);
+    // ... решта коду без змін
+}
 
     // +10h їзди
     const ext10 = driving > 9;
