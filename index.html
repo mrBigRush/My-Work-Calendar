@@ -243,22 +243,18 @@
     <div id="day-tacho-section" class="modal-section" style="display:none">
         <p id="lbl-sec-tacho" class="modal-section-title">Dane tachografu</p>
         <div class="grid grid-cols-2 gap-3 mb-3">
-            <div><label class="field-label" id="d-lbl-start">Początek</label><input type="time" id="d-inp-start" class="field-input"></div>
-            <div><label class="field-label" id="d-lbl-end">Koniec</label><input type="time" id="d-inp-end" class="field-input"></div>
+            <div><label class="field-label" id="d-lbl-start">Początek</label><input type="time" id="d-inp-start" class="field-input" oninput="autoCalcDay()"></div>
+            <div><label class="field-label" id="d-lbl-end">Koniec</label><input type="time" id="d-inp-end" class="field-input" oninput="autoCalcDay()"></div>
         </div>
-        <div class="mb-3"><label class="field-label" id="d-lbl-driving">Godziny jazdy</label><input type="time" id="d-inp-driving" class="field-input"></div>
+        <div class="mb-3"><label class="field-label" id="d-lbl-driving">Godziny jazdy</label><input type="time" id="d-inp-driving" class="field-input" oninput="autoCalcDay()"></div>
+        <!-- Auto-calculated badges -->
+        <div id="d-auto-badges" class="flex gap-2 mb-3" style="display:none!important"></div>
         <div class="border border-[var(--border)] rounded-xl overflow-hidden mb-3">
-            <div class="toggle-row"><div><p class="toggle-label" id="d-lbl-10">Wydłużona jazda (10h)</p><p class="toggle-desc" id="d-desc-10">max 2× na tydzień</p></div><div class="toggle" id="d-tog-10" onclick="toggleSwitch('d-tog-10')"></div></div>
-            <div class="toggle-row"><div><p class="toggle-label" id="d-lbl-15">Wydłużony dzień (15h)</p><p class="toggle-desc" id="d-desc-15">max 2× na tydzień</p></div><div class="toggle" id="d-tog-15" onclick="toggleSwitch('d-tog-15')"></div></div>
             <div class="toggle-row"><div><p class="toggle-label" id="d-lbl-9h">Skrócony odpoczynek (9h)</p><p class="toggle-desc" id="d-desc-9h">max 3× między odpoczynkami</p></div><div class="toggle" id="d-tog-9h" onclick="toggleSwitch('d-tog-9h')"></div></div>
         </div>
-        <div class="mb-1">
-            <label class="field-label" id="d-lbl-breaks">Przerwy 45 min</label>
-            <div class="flex items-center gap-3">
-                <button class="counter-btn" onclick="adjBreaks('d',-1)">−</button>
-                <span id="d-val-breaks" class="flex-1 text-center font-bold text-lg" style="font-family:var(--mono)">0</span>
-                <button class="counter-btn" onclick="adjBreaks('d',1)">+</button>
-            </div>
+        <!-- Auto info -->
+        <div id="d-auto-info" class="rounded-xl p-3 mb-1 text-xs" style="background:var(--bg);font-family:var(--mono);display:none">
+            <p id="d-auto-text" class="text-[var(--muted)]"></p>
         </div>
     </div>
 
@@ -281,22 +277,16 @@
     <div class="modal-handle"></div>
     <p id="modal-tacho-date" class="modal-title">—</p>
     <div class="grid grid-cols-2 gap-3 mb-3">
-        <div><label class="field-label" id="t-lbl-start">Początek</label><input type="time" id="t-inp-start" class="field-input"></div>
-        <div><label class="field-label" id="t-lbl-end">Koniec</label><input type="time" id="t-inp-end" class="field-input"></div>
+        <div><label class="field-label" id="t-lbl-start">Początek</label><input type="time" id="t-inp-start" class="field-input" oninput="autoCalcTacho()"></div>
+        <div><label class="field-label" id="t-lbl-end">Koniec</label><input type="time" id="t-inp-end" class="field-input" oninput="autoCalcTacho()"></div>
     </div>
-    <div class="mb-3"><label class="field-label" id="t-lbl-driving">Godziny jazdy</label><input type="time" id="t-inp-driving" class="field-input"></div>
+    <div class="mb-3"><label class="field-label" id="t-lbl-driving">Godziny jazdy</label><input type="time" id="t-inp-driving" class="field-input" oninput="autoCalcTacho()"></div>
+    <!-- Auto info -->
+    <div id="t-auto-info" class="rounded-xl p-3 mb-3 text-xs" style="background:var(--bg);font-family:var(--mono);display:none">
+        <p id="t-auto-text" class="text-[var(--muted)]"></p>
+    </div>
     <div class="border border-[var(--border)] rounded-xl overflow-hidden mb-3">
-        <div class="toggle-row"><div><p class="toggle-label" id="t-lbl-10">Wydłużona jazda (10h)</p><p class="toggle-desc" id="t-desc-10">max 2× na tydzień</p></div><div class="toggle" id="t-tog-10" onclick="toggleSwitch('t-tog-10')"></div></div>
-        <div class="toggle-row"><div><p class="toggle-label" id="t-lbl-15">Wydłużony dzień (15h)</p><p class="toggle-desc" id="t-desc-15">max 2× na tydzień</p></div><div class="toggle" id="t-tog-15" onclick="toggleSwitch('t-tog-15')"></div></div>
         <div class="toggle-row"><div><p class="toggle-label" id="t-lbl-9h">Skrócony odpoczynek (9h)</p><p class="toggle-desc" id="t-desc-9h">max 3× między odpoczynkami</p></div><div class="toggle" id="t-tog-9h" onclick="toggleSwitch('t-tog-9h')"></div></div>
-    </div>
-    <div class="mb-3">
-        <label class="field-label" id="t-lbl-breaks">Przerwy 45 min</label>
-        <div class="flex items-center gap-3">
-            <button class="counter-btn" onclick="adjBreaks('t',-1)">−</button>
-            <span id="t-val-breaks" class="flex-1 text-center font-bold text-lg" style="font-family:var(--mono)">0</span>
-            <button class="counter-btn" onclick="adjBreaks('t',1)">+</button>
-        </div>
     </div>
     <div class="grid grid-cols-2 gap-2 mb-2">
         <button onclick="saveTacho()" class="btn-primary" id="t-btn-save">Zapisz</button>
@@ -436,13 +426,11 @@ window.changeLang = (l) => {
     set('lbl-sec-type',t.secType); set('lbl-sec-tacho',t.secTacho);
     set('chip-work-lbl',t.work); set('chip-vacation-lbl',t.vacation); set('chip-sick-lbl',t.sick);
     set('d-lbl-start',t.start); set('d-lbl-end',t.end); set('d-lbl-driving',t.driving);
-    set('d-lbl-10',t.tog10); set('d-desc-10',t.desc10); set('d-lbl-15',t.tog15); set('d-desc-15',t.desc15);
-    set('d-lbl-9h',t.tog9h); set('d-desc-9h',t.desc9h); set('d-lbl-breaks',t.breaks);
+    set('d-lbl-9h',t.tog9h); set('d-desc-9h',t.desc9h);
     set('d-btn-save',t.save); set('d-btn-cancel',t.cancel); set('d-lbl-delete',t.deleteDay);
     // Tacho modal
     set('t-lbl-start',t.start); set('t-lbl-end',t.end); set('t-lbl-driving',t.driving);
-    set('t-lbl-10',t.tog10); set('t-desc-10',t.desc10); set('t-lbl-15',t.tog15); set('t-desc-15',t.desc15);
-    set('t-lbl-9h',t.tog9h); set('t-desc-9h',t.desc9h); set('t-lbl-breaks',t.breaks);
+    set('t-lbl-9h',t.tog9h); set('t-desc-9h',t.desc9h);
     set('t-btn-save',t.save); set('t-btn-cancel',t.cancel); set('t-lbl-delete',t.deleteDay);
     // Tacho stats
     set('tacho-stats-title',t.weekStats); set('lbl-driving-hours',t.drivingH);
@@ -536,7 +524,8 @@ async function loadTachoIntoDay(dateStr){
     setToggle('d-tog-15',!!data?.used_extended_15);
     setToggle('d-tog-9h',!!data?.reduced_rest_9h);
     dBreaks=data?.short_breaks_count||0;
-    document.getElementById('d-val-breaks').innerText=dBreaks;
+    document.getElementById('d-val-breaks') && (document.getElementById('d-val-breaks').innerText=dBreaks);
+    updateAutoInfo('d');
 }
 
 window.selectChip = (type, silent=false) => {
@@ -558,14 +547,13 @@ window.saveDay = async()=>{
         const e=document.getElementById('d-inp-end').value||null;
         const drTime=document.getElementById('d-inp-driving').value;
         const dr=timeToDecimal(drTime);
-        const e10=document.getElementById('d-tog-10').classList.contains('on');
-        const e15=document.getElementById('d-tog-15').classList.contains('on');
+        const {ext10:e10, ext15:e15}=calcAuto(drTime, s, e);
         const r9h=document.getElementById('d-tog-9h').classList.contains('on');
-        if(s||e||dr>0||e10||e15||r9h||dBreaks>0){
+        if(s||e||dr>0||e10||e15||r9h){
             await supabase.from('driving_days').upsert({
                 date:editingDates[0], start_time:s, end_time:e, driving_hours:dr,
                 used_extended_10:e10, used_extended_15:e15,
-                reduced_rest_9h:r9h, short_breaks_count:dBreaks
+                reduced_rest_9h:r9h, short_breaks_count:0
             }, { onConflict: 'date' });
         }
     }
@@ -614,6 +602,40 @@ window.onWeekStartPicked = ()=>{
 
 function timeToDecimal(t){ if(!t) return 0; const [h,m]=t.split(':').map(Number); return h+(m||0)/60; }
 function decimalToTime(v){ if(!v&&v!==0) return ''; const h=Math.floor(v); const m=Math.round((v-h)*60); return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; }
+
+function calcAuto(drivingVal, startVal, endVal) {
+    const driving = timeToDecimal(drivingVal);
+    const ext10 = driving > 9;
+    let ext15 = false;
+    if (startVal && endVal) {
+        let workH = timeToDecimal(endVal) - timeToDecimal(startVal);
+        if (workH < 0) workH += 24; // overnight
+        ext15 = workH > 15;
+    }
+    return { ext10, ext15, driving };
+}
+
+function updateAutoInfo(prefix) {
+    const driving = document.getElementById(`${prefix}-inp-driving`).value;
+    const start   = document.getElementById(`${prefix}-inp-start`).value;
+    const end     = document.getElementById(`${prefix}-inp-end`).value;
+    const { ext10, ext15 } = calcAuto(driving, start, end);
+    const infoEl  = document.getElementById(`${prefix}-auto-info`);
+    const textEl  = document.getElementById(`${prefix}-auto-text`);
+    if (!infoEl || !textEl) return;
+    const parts = [];
+    if (ext10) parts.push('✅ +10h їзди');
+    if (ext15) parts.push('✅ +15h робочий день');
+    if (parts.length) {
+        textEl.textContent = parts.join('  |  ');
+        infoEl.style.display = '';
+    } else {
+        infoEl.style.display = 'none';
+    }
+}
+
+window.autoCalcDay   = () => updateAutoInfo('d');
+window.autoCalcTacho = () => updateAutoInfo('t');
 
 async function renderTachoWeek(){
     const {data}=await supabase.from('driving_days').select('*');
@@ -688,21 +710,23 @@ function openTachoModal(dateStr,existing){
     setToggle('t-tog-15',!!existing?.used_extended_15);
     setToggle('t-tog-9h',!!existing?.reduced_rest_9h);
     tBreaks=existing?.short_breaks_count||0;
-    document.getElementById('t-val-breaks').innerText=tBreaks;
+    document.getElementById('t-val-breaks') && (document.getElementById('t-val-breaks').innerText=tBreaks);
     document.getElementById('t-btn-delete').style.display=existing?'':'none';
+    updateAutoInfo('t');
     openModal('modal-tacho');
 }
 
 window.saveTacho = async()=>{
+    const drTime=document.getElementById('t-inp-driving').value;
+    const s=document.getElementById('t-inp-start').value||null;
+    const e=document.getElementById('t-inp-end').value||null;
+    const {ext10, ext15, driving}=calcAuto(drTime, s, e);
     await supabase.from('driving_days').upsert({
         date:editingTachoDate,
-        start_time:document.getElementById('t-inp-start').value||null,
-        end_time:document.getElementById('t-inp-end').value||null,
-        driving_hours:timeToDecimal(document.getElementById('t-inp-driving').value),
-        used_extended_10:document.getElementById('t-tog-10').classList.contains('on'),
-        used_extended_15:document.getElementById('t-tog-15').classList.contains('on'),
+        start_time:s, end_time:e, driving_hours:driving,
+        used_extended_10:ext10, used_extended_15:ext15,
         reduced_rest_9h:document.getElementById('t-tog-9h').classList.contains('on'),
-        short_breaks_count:tBreaks,
+        short_breaks_count:0,
     }, { onConflict: 'date' });
     closeModal('modal-tacho');
     toast(i18n[lang].save+' ✓');
