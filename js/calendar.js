@@ -165,13 +165,13 @@ export async function deleteDay() {
 
 // ── Auto-info display ─────────────────────────────────
 export function updateAutoInfo(prefix, getLang) {
-    const lang = getLang();
-    const t = i18n[lang];
     const driving = document.getElementById(`${prefix}-inp-driving`)?.value || '';
     const start   = document.getElementById(`${prefix}-inp-start`)?.value || '';
     const end     = document.getElementById(`${prefix}-inp-end`)?.value || '';
     const prevEnd = document.getElementById(`${prefix}-inp-start`)?.dataset?.prevEnd || null;
-
+    
+    alert(`updateAutoInfo called!\ndriving: "${driving}"\nstart: "${start}"\nend: "${end}"\nprevEnd: "${prevEnd}"`);
+    // ... решта без змін
     const { ext10, ext15, restType, restHours } = calcDayAuto(driving, start, end, prevEnd);
 
     const infoEl = document.getElementById(`${prefix}-auto-info`);
