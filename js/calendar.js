@@ -39,6 +39,12 @@ export function initCalendar(getLang) {
             editingDates = [info.dateStr];
             openDayModal(info.dateStr, false, getLang);
         },
+        eventClick: (info) => {
+            if (!isAdmin) return;
+            const dateStr = formatDate(new Date(info.event.start));
+            editingDates = [dateStr];
+            openDayModal(dateStr, false, getLang);
+        },
         select: (info) => {
             if (!isAdmin) return;
             editingDates = [];
@@ -46,7 +52,9 @@ export function initCalendar(getLang) {
             const e = new Date(info.end);
             while (c < e) { editingDates.push(formatDate(c)); c.setDate(c.getDate() + 1); }
             openDayModal(editingDates[0], editingDates.length > 1, getLang);
-        }
+        },
+        eventDisplay: 'block',
+        eventInteractive: false,
     });
     window.calendar.render();
 }
