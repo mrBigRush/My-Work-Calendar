@@ -47,30 +47,35 @@ export function decimalToTime(v) {
  * @returns {{ ext10, ext15, reduced_rest_9h, restHours, restType }}
  */
 export function calcDayAuto(drivingTime, startTime, endTime, prevEndTime) {
-    alert(`driving: ${drivingTime}\nstart: ${startTime}\nend: ${endTime}\nprevEnd: ${prevEndTime}`);
-    // ... решта коду без змін
-}
+    const driving = timeToDecimal(drivingTime);
 
-    // +10h їзди
+    // +10h їзди: більше 9 годин
     const ext10 = driving > 9;
 
-    // +15h робочий день
+    // +15h робочий день: тривалість зміни більше 13 годин
+    // (стандарт EU: робочий день >13г вважається подовженим до 15г ліміту)
     let ext15 = false;
     let workHours = 0;
     if (startTime && endTime) {
-        workHours = timeToDecimal(endTime) - timeToDecimal(startTime);
-        if (workHours < 0) workHours += 24; // нічна зміна
-        ext15 = workHours > 15;
+        const s = timeToDecimal(startTime);
+        const e = timeToDecimal(endTime);
+        workHours = e - s;
+        if (workHours < 0) workHours += 24; // нічна зміна через північ
+        workHours = Math.round(workHours * 100) / 100; // прибираємо floating point похибку
+        ext15 = workHours > 13;
     }
 
     // Відпочинок між змінами
     let restHours = null;
-    let restType = null;  // 'normal' | 'reduced9h' | 'weekly45' | 'weekly24' | null
+    let restType = null;
     let reduced_rest_9h = false;
 
     if (prevEndTime && startTime) {
-        restHours = timeToDecimal(startTime) - timeToDecimal(prevEndTime);
-        if (restHours < 0) restHours += 24; // через північ
+        const s = timeToDecimal(startTime);
+        const p = timeToDecimal(prevEndTime);
+        restHours = s - p;
+        if (restHours < 0) restHours += 24;
+        restHours = Math.round(restHours * 100) / 100;
 
         if (restHours >= 45) {
             restType = 'weekly45';
@@ -82,7 +87,6 @@ export function calcDayAuto(drivingTime, startTime, endTime, prevEndTime) {
         } else if (restHours >= 11) {
             restType = 'normal';
         }
-        // < 9h — не рахуємо (можливо помилка вводу)
     }
 
     return { ext10, ext15, reduced_rest_9h, restHours, restType, workHours, driving };

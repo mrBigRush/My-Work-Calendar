@@ -165,20 +165,29 @@ export async function deleteDay() {
 
 // ── Auto-info display ─────────────────────────────────
 export function updateAutoInfo(prefix, getLang) {
-    const driving = document.getElementById(`${prefix}-inp-driving`)?.value || '';
-    const start   = document.getElementById(`${prefix}-inp-start`)?.value || '';
-    const end     = document.getElementById(`${prefix}-inp-end`)?.value || '';
-    const prevEnd = document.getElementById(`${prefix}-inp-start`)?.dataset?.prevEnd || null;
-    
-    alert(`updateAutoInfo called!\ndriving: "${driving}"\nstart: "${start}"\nend: "${end}"\nprevEnd: "${prevEnd}"`);
-    // ... решта без змін
-    const { ext10, ext15, restType, restHours } = calcDayAuto(driving, start, end, prevEnd);
+    const lang = getLang();
+    const t = i18n[lang];
+    const drivingEl = document.getElementById(`${prefix}-inp-driving`);
+    const startEl   = document.getElementById(`${prefix}-inp-start`);
+    const endEl     = document.getElementById(`${prefix}-inp-end`);
+    if (!drivingEl || !startEl || !endEl) return;
+
+    const driving = drivingEl.value || '';
+    const start   = startEl.value   || '';
+    const end     = endEl.value     || '';
+    const prevEnd = startEl.dataset.prevEnd || '';
+
+    const { ext10, ext15, restType, restHours, workHours } =
+        calcDayAuto(driving, start, end, prevEnd || null);
 
     const infoEl = document.getElementById(`${prefix}-auto-info`);
     const textEl = document.getElementById(`${prefix}-auto-text`);
     if (!infoEl || !textEl) return;
 
     const parts = [];
+    if (start && end && workHours > 0) {
+        parts.push(`⏱ ${workHours.toFixed(1)}г роботи`);
+    }
     if (ext10) parts.push(t.autoInfo.ext10);
     if (ext15) parts.push(t.autoInfo.ext15);
     if (restType === 'reduced9h')  parts.push(`${t.autoInfo.rest9h} (${restHours?.toFixed(1)}г)`);
