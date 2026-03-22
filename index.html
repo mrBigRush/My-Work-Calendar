@@ -4,127 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kalendarz Pracy | Serhii Kolomiiets</title>
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.10/locales-all.global.min.js"></script>
-
-    <style>
-        :root {
-            --bg: #f5f4f0; --surface: #ffffff; --border: #e2e0d8;
-            --text: #1a1916; --muted: #8a8880;
-            --accent: #2d6a4f; --accent-light: #e8f5ee;
-            --blue: #1d4ed8; --blue-light: #eff6ff;
-            --red: #dc2626; --red-light: #fef2f2;
-            --orange: #d97706; --orange-light: #fffbeb;
-            --mono: 'IBM Plex Mono', monospace;
-            --sans: 'IBM Plex Sans', sans-serif;
-        }
-        * { box-sizing: border-box; }
-        body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
-
-        /* ── Calendar ── */
-        .fc { font-family: var(--sans) !important; font-size: 0.85rem; }
-        .fc-toolbar-title { font-family: var(--mono) !important; font-size: 1rem !important; font-weight: 600 !important; }
-        .fc-button { font-family: var(--mono) !important; font-size: 0.75rem !important; background: var(--surface) !important; border: 1px solid var(--border) !important; color: var(--text) !important; border-radius: 6px !important; }
-        .fc-button:hover { background: var(--bg) !important; }
-        .fc-button-active, .fc-button-primary:not(:disabled):active { background: var(--text) !important; color: var(--surface) !important; }
-        .fc-daygrid-day-number { font-family: var(--mono); font-size: 0.75rem; }
-        .fc-col-header-cell-cushion { font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; }
-        .fc-highlight { background: rgba(45,106,79,0.12) !important; }
-        .type-work  { background-color: var(--accent) !important; border: none !important; border-radius: 3px; }
-        .type-vacation { background-color: var(--blue) !important; border: none !important; border-radius: 3px; }
-        .type-sick  { background-color: var(--red)   !important; border: none !important; border-radius: 3px; }
-        .fc-event-title { font-family: var(--mono); font-size: 0.65rem; font-weight: 600; }
-        /* Tacho dot marker on calendar cell */
-        .fc-daygrid-day { position: relative; }
-        .fc-daygrid-day.has-tacho::after { content: '🚛'; font-size: 0.5rem; position: absolute; bottom: 2px; right: 3px; line-height: 1; pointer-events: none; }
-
-        /* ── Tabs ── */
-        .tab-btn { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.5rem 1.25rem; border-radius: 8px; transition: all 0.15s; border: 1px solid transparent; cursor: pointer; background: transparent; color: var(--muted); }
-        .tab-btn.active { background: var(--text); color: var(--surface); border-color: var(--text); }
-        .tab-btn:not(.active):hover { background: var(--border); color: var(--text); }
-
-        /* ── Stat cards ── */
-        .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem 1rem; }
-        .stat-label { font-family: var(--mono); font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
-        .stat-value { font-family: var(--mono); font-size: 1.75rem; font-weight: 600; line-height: 1; }
-
-        /* ── Week bars ── */
-        .week-bar-bg { background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; }
-        .week-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
-        .ok { color: var(--accent); } .warn { color: var(--orange); } .danger { color: var(--red); }
-
-        /* ── Tacho day rows ── */
-        .day-row { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1rem; transition: border-color 0.15s, box-shadow 0.15s; }
-        .day-row.clickable { cursor: pointer; }
-        .day-row.clickable:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(45,106,79,0.08); }
-        .day-row.has-data { border-left: 3px solid var(--accent); }
-        .day-name { font-family: var(--mono); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
-        .day-date { font-family: var(--mono); font-size: 1rem; font-weight: 600; }
-        .day-hours { font-family: var(--mono); font-size: 0.75rem; color: var(--accent); font-weight: 600; }
-
-        /* ── Badges ── */
-        .badge { font-family: var(--mono); font-size: 0.6rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 20px; }
-        .badge-10 { background: var(--orange-light); color: var(--orange); }
-        .badge-15 { background: var(--red-light); color: var(--red); }
-        .badge-9h { background: var(--blue-light); color: var(--blue); }
-
-        /* ── Modal (bottom sheet) ── */
-        .modal-backdrop { position: fixed; inset: 0; background: rgba(26,25,22,0.55); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
-        .modal-backdrop.open { opacity: 1; pointer-events: all; }
-        .modal { background: var(--surface); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; padding: 1.25rem 1.25rem 2.5rem; transform: translateY(40px); transition: transform 0.25s ease; box-shadow: 0 -8px 40px rgba(0,0,0,0.15); max-height: 92vh; overflow-y: auto; }
-        .modal-backdrop.open .modal { transform: translateY(0); }
-        .modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 1rem; }
-        .modal-title { font-family: var(--mono); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; }
-        .modal-section { border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem; }
-        .modal-section-title { font-family: var(--mono); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.75rem; }
-
-        /* ── Type chips ── */
-        .type-chip { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.35rem; padding: 0.75rem 0.5rem; border-radius: 12px; border: 2px solid transparent; cursor: pointer; transition: all 0.15s; background: var(--bg); }
-        .type-chip.sel-work     { border-color: var(--accent); background: var(--accent-light); }
-        .type-chip.sel-vacation { border-color: var(--blue);   background: var(--blue-light); }
-        .type-chip.sel-sick     { border-color: var(--red);    background: var(--red-light); }
-
-        /* ── Form ── */
-        .field-label { font-family: var(--mono); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.3rem; display: block; }
-        .field-input { width: 100%; font-family: var(--mono); font-size: 0.9rem; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem 0.75rem; outline: none; transition: border-color 0.15s; color: var(--text); }
-        .field-input:focus { border-color: var(--accent); }
-
-        /* ── Toggle ── */
-        .toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--border); }
-        .toggle-row:last-child { border-bottom: none; }
-        .toggle-label { font-family: var(--sans); font-size: 0.82rem; font-weight: 500; }
-        .toggle-desc  { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); }
-        .toggle { width: 40px; height: 22px; background: var(--border); border-radius: 11px; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
-        .toggle.on { background: var(--accent); }
-        .toggle::after { content: ''; position: absolute; width: 16px; height: 16px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-        .toggle.on::after { transform: translateX(18px); }
-
-        /* ── Buttons ── */
-        .btn-primary   { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; background: var(--text); color: var(--surface); border: none; border-radius: 8px; padding: 0.65rem 1.25rem; cursor: pointer; transition: opacity 0.15s; width: 100%; }
-        .btn-primary:hover { opacity: 0.85; }
-        .btn-secondary { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 1.25rem; cursor: pointer; width: 100%; }
-        .btn-secondary:hover { background: var(--border); }
-        .btn-danger    { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; background: var(--red-light); color: var(--red); border: 1px solid #fecaca; border-radius: 8px; padding: 0.65rem 1.25rem; cursor: pointer; width: 100%; }
-        .btn-danger:hover { background: #fee2e2; }
-
-        /* ── Counter ── */
-        .counter-btn { font-family: var(--mono); font-size: 1rem; font-weight: 700; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; width: 36px; height: 36px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .counter-btn:hover { background: var(--border); }
-
-        /* ── Week nav ── */
-        .week-nav-btn { font-family: var(--mono); font-size: 0.9rem; font-weight: 700; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; width: 34px; height: 34px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .week-nav-btn:hover { background: var(--bg); }
-        .week-date-input { font-family: var(--mono); font-size: 0.8rem; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.35rem 0.6rem; outline: none; color: var(--text); cursor: pointer; }
-        .week-date-input:focus { border-color: var(--accent); }
-
-        /* ── Toast ── */
-        #toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--text); color: var(--surface); font-family: var(--mono); font-size: 0.75rem; padding: 0.6rem 1.25rem; border-radius: 8px; transition: transform 0.25s; z-index: 200; white-space: nowrap; }
-        #toast.show { transform: translateX(-50%) translateY(0); }
-    </style>
 </head>
 <body>
 <div class="max-w-2xl mx-auto px-3 py-4">
@@ -136,21 +19,21 @@
             <span id="admin-badge" style="display:none" class="text-[9px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider inline-block">Admin</span>
         </div>
         <div class="flex items-center gap-2">
-            <button id="report-btn" onclick="generateReport()" class="bg-[var(--blue-light)] text-[var(--blue)] p-2 rounded-xl hover:opacity-80 transition" title="Report">
+            <button id="report-btn" onclick="window._generateReport()" class="bg-[var(--blue-light)] text-[var(--blue)] p-2 rounded-xl hover:opacity-80 transition" title="Report">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             </button>
-            <select onchange="changeLang(this.value)" id="lang-select" class="text-xs border-none bg-[var(--bg)] rounded-xl px-2 py-2 outline-none font-semibold cursor-pointer" style="font-family:var(--mono)">
+            <select onchange="window._changeLang(this.value)" id="lang-select" class="text-xs border-none bg-[var(--bg)] rounded-xl px-2 py-2 outline-none font-semibold cursor-pointer" style="font-family:var(--mono)">
                 <option value="pl">PL</option>
                 <option value="uk">UA</option>
             </select>
-            <button id="login-btn" onclick="handleAuth()" class="text-xs font-bold px-4 py-2 rounded-xl bg-[var(--text)] text-white hover:opacity-80 transition" style="font-family:var(--mono)">Login</button>
+            <button id="login-btn" onclick="window._handleAuth()" class="text-xs font-bold px-4 py-2 rounded-xl bg-[var(--text)] text-white hover:opacity-80 transition" style="font-family:var(--mono)">Login</button>
         </div>
     </div>
 
     <!-- ── Tabs (admin only) ── -->
     <div id="tabs-row" style="display:none" class="gap-2 mb-4 bg-white p-1.5 rounded-xl border border-[var(--border)]">
-        <button class="tab-btn active flex-1" data-tab="calendar" onclick="switchTab('calendar')">📅 <span class="tab-lbl-cal">Kalendarz</span></button>
-        <button class="tab-btn flex-1" data-tab="tacho" onclick="switchTab('tacho')">🚛 <span class="tab-lbl-tacho">Tachograf</span></button>
+        <button class="tab-btn active flex-1" data-tab="calendar" onclick="window._switchTab('calendar')">📅 <span class="tab-lbl-cal">Kalendarz</span></button>
+        <button class="tab-btn flex-1" data-tab="tacho" onclick="window._switchTab('tacho')">🚛 <span class="tab-lbl-tacho">Tachograf</span></button>
     </div>
 
     <!-- ══════════════════════════════
@@ -175,15 +58,15 @@
 
         <!-- Week navigator -->
         <div class="flex items-center gap-3 mb-3 bg-white px-4 py-3 rounded-xl border border-[var(--border)]">
-            <button class="week-nav-btn" onclick="shiftWeek(-1)">←</button>
+            <button class="week-nav-btn" onclick="window._shiftWeek(-1)">←</button>
             <div class="flex flex-col flex-1 items-center gap-1">
                 <div class="flex items-center gap-2">
                     <span id="lbl-week-from" class="text-[10px] text-[var(--muted)]" style="font-family:var(--mono)">od</span>
-                    <input type="date" id="week-start-picker" class="week-date-input" onchange="onWeekStartPicked()">
+                    <input type="date" id="week-start-picker" class="week-date-input" onchange="window._onWeekStartPicked()">
                 </div>
                 <p id="week-end-label" class="text-[10px] text-[var(--muted)]" style="font-family:var(--mono)"></p>
             </div>
-            <button class="week-nav-btn" onclick="shiftWeek(1)">→</button>
+            <button class="week-nav-btn" onclick="window._shiftWeek(1)">→</button>
         </div>
 
         <!-- Weekly stats -->
@@ -191,20 +74,33 @@
             <p id="tacho-stats-title" class="stat-label text-[var(--muted)] mb-3">Podsumowanie tygodnia</p>
             <div class="space-y-3">
                 <div>
-                    <div class="flex justify-between mb-1"><span class="text-xs font-medium" id="lbl-driving-hours">Godziny jazdy</span><span id="val-driving-hours" class="stat-label ok">0/56h</span></div>
+                    <div class="flex justify-between mb-1"><span class="text-xs font-medium" id="lbl-driving-hours">Godziny jazdy</span><span id="val-driving-hours" class="stat-label">0/56h</span></div>
                     <div class="week-bar-bg"><div id="bar-driving" class="week-bar-fill bg-[var(--accent)]" style="width:0%"></div></div>
                 </div>
                 <div>
-                    <div class="flex justify-between mb-1"><span class="text-xs font-medium" id="lbl-ext10">Wydłużone dni jazdy (10h)</span><span id="val-ext10" class="stat-label ok">0/2</span></div>
+                    <div class="flex justify-between mb-1"><span class="text-xs font-medium" id="lbl-ext10">Wydłużone dni jazdy (10h)</span><span id="val-ext10" class="stat-label">0/2</span></div>
                     <div class="week-bar-bg"><div id="bar-ext10" class="week-bar-fill bg-[var(--orange)]" style="width:0%"></div></div>
                 </div>
                 <div>
-                    <div class="flex justify-between mb-1"><span class="text-xs font-medium" id="lbl-ext15">Wydłużone dni pracy (15h)</span><span id="val-ext15" class="stat-label ok">0/2</span></div>
+                    <div class="flex justify-between mb-1"><span class="text-xs font-medium" id="lbl-ext15">Wydłużone dni pracy (15h)</span><span id="val-ext15" class="stat-label">0/2</span></div>
                     <div class="week-bar-bg"><div id="bar-ext15" class="week-bar-fill bg-[var(--red)]" style="width:0%"></div></div>
                 </div>
                 <div>
-                    <div class="flex justify-between mb-1"><span class="text-xs font-medium" id="lbl-short-rests">Skrócone odpoczynki (9h)</span><span id="val-short-rests" class="stat-label ok">0/3</span></div>
+                    <div class="flex justify-between mb-1"><span class="text-xs font-medium" id="lbl-short-rests">Skrócone odpoczynki (9h)</span><span id="val-short-rests" class="stat-label">0/3</span></div>
                     <div class="week-bar-bg"><div id="bar-short-rests" class="week-bar-fill bg-[var(--blue)]" style="width:0%"></div></div>
+                </div>
+                <!-- Last rest & compensation -->
+                <div id="rest-info-block" style="display:none">
+                    <div class="flex justify-between mb-1">
+                        <span class="text-xs font-medium" id="lbl-last-rest">Ostatni odpoczynek</span>
+                        <span id="val-last-rest" class="stat-label">—</span>
+                    </div>
+                </div>
+                <div id="compensation-block">
+                    <div class="flex justify-between mb-1">
+                        <span class="text-xs font-medium" id="lbl-compensation">Kompensacja tygodniowa</span>
+                        <span id="val-compensation" class="stat-label">—</span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -215,56 +111,58 @@
 
 <!-- ══════════════════════════════════════════
      MODAL: Unified day (calendar click)
-     — type chip + tacho fields in one sheet
 ══════════════════════════════════════════ -->
 <div id="modal-day" class="modal-backdrop">
   <div class="modal">
     <div class="modal-handle"></div>
     <p id="modal-day-title" class="modal-title">—</p>
 
-    <!-- Type chips -->
     <p id="lbl-sec-type" class="modal-section-title">Typ dnia</p>
     <div class="flex gap-2 mb-1">
-        <div class="type-chip" id="chip-work" onclick="selectChip('work')">
+        <div class="type-chip" id="chip-work"     onclick="window._selectChip('work')">
             <span class="text-xl">✅</span>
-            <span id="chip-work-lbl" class="text-[10px] font-bold text-[var(--accent)]" style="font-family:var(--mono)">Praca</span>
+            <span id="chip-work-lbl"     class="text-[10px] font-bold text-[var(--accent)]" style="font-family:var(--mono)">Praca</span>
         </div>
-        <div class="type-chip" id="chip-vacation" onclick="selectChip('vacation')">
+        <div class="type-chip" id="chip-vacation" onclick="window._selectChip('vacation')">
             <span class="text-xl">🌴</span>
-            <span id="chip-vacation-lbl" class="text-[10px] font-bold text-[var(--blue)]" style="font-family:var(--mono)">Urlop</span>
+            <span id="chip-vacation-lbl" class="text-[10px] font-bold text-[var(--blue)]"   style="font-family:var(--mono)">Urlop</span>
         </div>
-        <div class="type-chip" id="chip-sick" onclick="selectChip('sick')">
+        <div class="type-chip" id="chip-sick"     onclick="window._selectChip('sick')">
             <span class="text-xl">🏥</span>
-            <span id="chip-sick-lbl" class="text-[10px] font-bold text-[var(--red)]" style="font-family:var(--mono)">Choroba</span>
+            <span id="chip-sick-lbl"     class="text-[10px] font-bold text-[var(--red)]"    style="font-family:var(--mono)">Choroba</span>
         </div>
     </div>
 
-    <!-- Tacho fields (visible only when type=work AND single day) -->
     <div id="day-tacho-section" class="modal-section" style="display:none">
         <p id="lbl-sec-tacho" class="modal-section-title">Dane tachografu</p>
         <div class="grid grid-cols-2 gap-3 mb-3">
-            <div><label class="field-label" id="d-lbl-start">Początek</label><input type="time" id="d-inp-start" class="field-input" oninput="autoCalcDay()"></div>
-            <div><label class="field-label" id="d-lbl-end">Koniec</label><input type="time" id="d-inp-end" class="field-input" oninput="autoCalcDay()"></div>
+            <div><label class="field-label" id="d-lbl-start">Początek</label><input type="time" id="d-inp-start" class="field-input" oninput="window._autoCalcDay()"></div>
+            <div><label class="field-label" id="d-lbl-end">Koniec</label><input type="time" id="d-inp-end" class="field-input" oninput="window._autoCalcDay()"></div>
         </div>
-        <div class="mb-3"><label class="field-label" id="d-lbl-driving">Godziny jazdy</label><input type="time" id="d-inp-driving" class="field-input" oninput="autoCalcDay()"></div>
-        <!-- Auto-calculated badges -->
-        <div id="d-auto-badges" class="flex gap-2 mb-3" style="display:none!important"></div>
-        <div class="border border-[var(--border)] rounded-xl overflow-hidden mb-3">
-            <div class="toggle-row"><div><p class="toggle-label" id="d-lbl-9h">Skrócony odpoczynek (9h)</p><p class="toggle-desc" id="d-desc-9h">max 3× między odpoczynkami</p></div><div class="toggle" id="d-tog-9h" onclick="toggleSwitch('d-tog-9h')"></div></div>
+        <div class="mb-3">
+            <label class="field-label" id="d-lbl-driving">Godziny jazdy</label>
+            <input type="time" id="d-inp-driving" class="field-input" oninput="window._autoCalcDay()">
         </div>
-        <!-- Auto info -->
-        <div id="d-auto-info" class="rounded-xl p-3 mb-1 text-xs" style="background:var(--bg);font-family:var(--mono);display:none">
-            <p id="d-auto-text" class="text-[var(--muted)]"></p>
+        <div id="d-auto-info" class="rounded-xl p-3 mb-3 text-xs" style="background:var(--bg);font-family:var(--mono);display:none;line-height:1.8">
+            <p id="d-auto-text"></p>
+        </div>
+        <div class="border border-[var(--border)] rounded-xl overflow-hidden mb-1">
+            <div class="toggle-row">
+                <div>
+                    <p class="toggle-label" id="d-lbl-9h">Skrócony odpoczynek (9h)</p>
+                    <p class="toggle-desc"  id="d-desc-9h">auto lub ręcznie</p>
+                </div>
+                <div class="toggle" id="d-tog-9h" onclick="this.classList.toggle('on')"></div>
+            </div>
         </div>
     </div>
 
-    <!-- Actions -->
     <div class="modal-section">
         <div class="grid grid-cols-2 gap-2 mb-2">
-            <button onclick="saveDay()" class="btn-primary" id="d-btn-save">Zapisz</button>
-            <button onclick="closeModal('modal-day')" class="btn-secondary" id="d-btn-cancel">Anuluj</button>
+            <button onclick="window._saveDay()" class="btn-primary"   id="d-btn-save">Zapisz</button>
+            <button onclick="window._closeModal('modal-day')" class="btn-secondary" id="d-btn-cancel">Anuluj</button>
         </div>
-        <button id="d-btn-delete" onclick="deleteDay()" class="btn-danger" style="display:none">🗑 <span id="d-lbl-delete">Usuń dzień</span></button>
+        <button id="d-btn-delete" onclick="window._deleteDay()" class="btn-danger" style="display:none">🗑 <span id="d-lbl-delete">Usuń dzień</span></button>
     </div>
   </div>
 </div>
@@ -277,22 +175,30 @@
     <div class="modal-handle"></div>
     <p id="modal-tacho-date" class="modal-title">—</p>
     <div class="grid grid-cols-2 gap-3 mb-3">
-        <div><label class="field-label" id="t-lbl-start">Początek</label><input type="time" id="t-inp-start" class="field-input" oninput="autoCalcTacho()"></div>
-        <div><label class="field-label" id="t-lbl-end">Koniec</label><input type="time" id="t-inp-end" class="field-input" oninput="autoCalcTacho()"></div>
+        <div><label class="field-label" id="t-lbl-start">Początek</label><input type="time" id="t-inp-start" class="field-input" oninput="window._autoCalcTacho()"></div>
+        <div><label class="field-label" id="t-lbl-end">Koniec</label><input type="time"   id="t-inp-end"   class="field-input" oninput="window._autoCalcTacho()"></div>
     </div>
-    <div class="mb-3"><label class="field-label" id="t-lbl-driving">Godziny jazdy</label><input type="time" id="t-inp-driving" class="field-input" oninput="autoCalcTacho()"></div>
-    <!-- Auto info -->
-    <div id="t-auto-info" class="rounded-xl p-3 mb-3 text-xs" style="background:var(--bg);font-family:var(--mono);display:none">
-        <p id="t-auto-text" class="text-[var(--muted)]"></p>
+    <div class="mb-3">
+        <label class="field-label" id="t-lbl-driving">Godziny jazdy</label>
+        <input type="time" id="t-inp-driving" class="field-input" oninput="window._autoCalcTacho()">
+    </div>
+    <div id="t-auto-info" class="rounded-xl p-3 mb-3 text-xs" style="background:var(--bg);font-family:var(--mono);display:none;line-height:1.8">
+        <p id="t-auto-text"></p>
     </div>
     <div class="border border-[var(--border)] rounded-xl overflow-hidden mb-3">
-        <div class="toggle-row"><div><p class="toggle-label" id="t-lbl-9h">Skrócony odpoczynek (9h)</p><p class="toggle-desc" id="t-desc-9h">max 3× między odpoczynkami</p></div><div class="toggle" id="t-tog-9h" onclick="toggleSwitch('t-tog-9h')"></div></div>
+        <div class="toggle-row">
+            <div>
+                <p class="toggle-label" id="t-lbl-9h">Skrócony odpoczynek (9h)</p>
+                <p class="toggle-desc"  id="t-desc-9h">auto lub ręcznie</p>
+            </div>
+            <div class="toggle" id="t-tog-9h" onclick="this.classList.toggle('on')"></div>
+        </div>
     </div>
     <div class="grid grid-cols-2 gap-2 mb-2">
-        <button onclick="saveTacho()" class="btn-primary" id="t-btn-save">Zapisz</button>
-        <button onclick="closeModal('modal-tacho')" class="btn-secondary" id="t-btn-cancel">Anuluj</button>
+        <button onclick="window._saveTacho()" class="btn-primary"  id="t-btn-save">Zapisz</button>
+        <button onclick="window._closeModal('modal-tacho')" class="btn-secondary" id="t-btn-cancel">Anuluj</button>
     </div>
-    <button id="t-btn-delete" onclick="deleteTacho()" class="btn-danger" style="display:none">🗑 <span id="t-lbl-delete">Usuń wpis</span></button>
+    <button id="t-btn-delete" onclick="window._deleteTacho()" class="btn-danger" style="display:none">🗑 <span id="t-lbl-delete">Usuń wpis</span></button>
   </div>
 </div>
 
@@ -307,433 +213,109 @@
     <input type="password" id="login-inp" class="field-input mb-3 text-center tracking-widest" placeholder="••••" maxlength="20" style="font-family:var(--mono);font-size:1rem">
     <p id="login-err" class="text-xs text-[var(--red)] mb-3 hidden" style="font-family:var(--mono)">Błędne hasło!</p>
     <div class="grid grid-cols-2 gap-2">
-        <button onclick="submitLogin()" class="btn-primary" id="lbl-login-btn">Zaloguj</button>
-        <button onclick="closeModal('modal-login')" class="btn-secondary" id="lbl-login-cancel">Anuluj</button>
+        <button onclick="window._submitLogin()" class="btn-primary"   id="lbl-login-btn">Zaloguj</button>
+        <button onclick="window._closeModal('modal-login')" class="btn-secondary" id="lbl-login-cancel">Anuluj</button>
     </div>
   </div>
 </div>
 
 <div id="toast">✓</div>
 
+<!-- ══════════════════════════════════════════
+     MAIN: bootstrap all modules
+══════════════════════════════════════════ -->
 <script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
+import { i18n }                                  from './js/config.js';
+import { isAdmin, initAuth, handleAuth,
+         submitLogin, applyAdminUI }              from './js/auth.js';
+import { initCalendar, selectChip, saveDay,
+         deleteDay, updateAutoInfo,
+         generateReport }                         from './js/calendar.js';
+import { tachoWeekStart, shiftWeek,
+         onWeekStartPicked, renderTachoWeek,
+         saveTacho, deleteTacho }                 from './js/tacho.js';
+import { closeModal }                             from './js/utils.js';
 
-const SUPABASE_URL = 'https://unyztaiglminylhbinsy.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVueXp0YWlnbG1pbnlsaGJpbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MjUwMzQsImV4cCI6MjA4OTEwMTAzNH0.aD-HFhE9XnPM_V0TBz7UJ_7lBGszSj0olz1CSkmcw_k';
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
-const ADMIN_PASS = '2026';
-
-// ── i18n ─────────────────────────────────────────────
-const i18n = {
-    pl: {
-        title:'Serhii Kolomiiets', work:'Praca', vacation:'Urlop', sick:'Choroba',
-        login:'Login', logout:'Wyloguj', hint:'Tryb podglądu', hintAdmin:'Kliknij dzień aby edytować',
-        reportHeader:'Podsumowanie: Serhii Kolomiiets', reportCopied:'Raport skopiowany!',
-        tabCal:'Kalendarz', tabTacho:'Tachograf',
-        secType:'Typ dnia', secTacho:'Dane tachografu',
-        weekFrom:'od', weekEnd:'koniec tygodnia',
-        drivingH:'Godziny jazdy', ext10:'Wydłużone dni jazdy (10h)', ext15:'Wydłużone dni pracy (15h)', shortRests:'Skrócone odpoczynki (9h)',
-        weekStats:'Podsumowanie tygodnia',
-        start:'Początek', end:'Koniec', driving:'Godziny jazdy',
-        tog10:'Wydłużona jazda (10h)', desc10:'max 2× na tydzień',
-        tog15:'Wydłużony dzień (15h)', desc15:'max 2× na tydzień',
-        tog9h:'Skrócony odpoczynek (9h)', desc9h:'max 3× między odpoczynkami',
-        breaks:'Przerwy 45 min',
-        save:'Zapisz', cancel:'Anuluj', deleteDay:'Usuń dzień',
-        loginTitle:'Logowanie', loginDesc:'Wpisz hasło administratora', loginBtn:'Zaloguj', loginErr:'Błędne hasło!',
-        dayNames:['Nd','Pn','Wt','Śr','Cz','Pt','Sb'],
-    },
-    uk: {
-        title:'Сергій Коломієць', work:'Робота', vacation:'Відпустка', sick:'Хвороба',
-        login:'Увійти', logout:'Вийти', hint:'Режим перегляду', hintAdmin:'Натисніть день для редагування',
-        reportHeader:'Звіт: Сергій Коломієць', reportCopied:'Звіт скопійовано!',
-        tabCal:'Календар', tabTacho:'Тахограф',
-        secType:'Тип дня', secTacho:'Дані тахографа',
-        weekFrom:'від', weekEnd:'кінець тижня',
-        drivingH:'Годин їзди', ext10:'Подовжені дні їзди (10г)', ext15:'Подовжені робочі дні (15г)', shortRests:'Скорочені відпочинки (9г)',
-        weekStats:'Підсумок тижня',
-        start:'Початок', end:'Кінець', driving:'Годин їзди',
-        tog10:'Подовжена їзда (10г)', desc10:'макс 2× на тиждень',
-        tog15:'Подовжений день (15г)', desc15:'макс 2× на тиждень',
-        tog9h:'Скорочений відпочинок (9г)', desc9h:'макс 3× між відпочинками',
-        breaks:'Перерви 45 хв',
-        save:'Зберегти', cancel:'Скасувати', deleteDay:'Видалити день',
-        loginTitle:'Вхід', loginDesc:'Введіть пароль адміністратора', loginBtn:'Увійти', loginErr:'Невірний пароль!',
-        dayNames:['Нд','Пн','Вт','Ср','Чт','Пт','Сб'],
-    }
-};
-
-// ── State ─────────────────────────────────────────────
+// ── Language state ────────────────────────────────────
 let lang = 'pl';
-let isAdmin = localStorage.getItem('isSergAdmin') === 'true';
-let allCalData = [];
-let editingDates = [];
-let editingDayType = null;
-let dBreaks = 0;         // breaks counter for day modal
-let tBreaks = 0;         // breaks counter for tacho modal
-let editingTachoDate = null;
-let tachoWeekStart = formatDate(new Date()); // YYYY-MM-DD
+const getLang = () => lang;
+window._getLang = getLang;
 
-// ── Helpers ───────────────────────────────────────────
-function formatDate(d) {
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-function parseLocal(s) { const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); }
-function addDays(s,n) { const d=parseLocal(s); d.setDate(d.getDate()+n); return formatDate(d); }
-function fmt(d) { return `${d.getDate()}.${String(d.getMonth()+1).padStart(2,'0')}.${d.getFullYear()}`; }
+// ── Expose to HTML onclick handlers ──────────────────
+window._handleAuth       = () => handleAuth(getLang);
+window._submitLogin      = () => submitLogin(getLang);
+window._selectChip       = (t) => selectChip(t);
+window._saveDay          = () => saveDay(getLang);
+window._deleteDay        = () => deleteDay();
+window._saveTacho        = () => saveTacho(getLang);
+window._deleteTacho      = () => deleteTacho(getLang);
+window._shiftWeek        = (d) => shiftWeek(d);
+window._onWeekStartPicked= () => onWeekStartPicked();
+window._autoCalcDay      = () => updateAutoInfo('d', getLang);
+window._autoCalcTacho    = () => updateAutoInfo('t', getLang);
+window._generateReport   = () => generateReport(getLang);
+window._closeModal       = closeModal;
 
-function toast(msg) {
-    const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show');
-    setTimeout(()=>el.classList.remove('show'),2000);
-}
-window.openModal  = id => document.getElementById(id).classList.add('open');
-window.closeModal = id => document.getElementById(id).classList.remove('open');
-window.toggleSwitch = id => document.getElementById(id).classList.toggle('on');
-function setToggle(id,val) { document.getElementById(id).classList.toggle('on',val); }
-
-window.adjBreaks = (prefix, dir) => {
-    if (prefix==='d') { dBreaks=Math.max(0,dBreaks+dir); document.getElementById('d-val-breaks').innerText=dBreaks; }
-    else              { tBreaks=Math.max(0,tBreaks+dir); document.getElementById('t-val-breaks').innerText=tBreaks; }
+// ── Tab switching ─────────────────────────────────────
+window._switchTab = (tab) => {
+    document.querySelectorAll('.tab-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.tab === tab));
+    document.getElementById('tab-calendar').style.display = tab === 'calendar' ? '' : 'none';
+    document.getElementById('tab-tacho').style.display    = tab === 'tacho'    ? '' : 'none';
+    document.getElementById('report-btn').style.display   = tab === 'calendar' ? '' : 'none';
+    if (tab === 'tacho')    renderTachoWeek(getLang);
+    if (tab === 'calendar' && window.calendar) setTimeout(() => window.calendar.updateSize(), 50);
 };
-
-// ── Auth ──────────────────────────────────────────────
-window.handleAuth = () => {
-    if (isAdmin) { localStorage.removeItem('isSergAdmin'); location.reload(); }
-    else {
-        document.getElementById('login-inp').value='';
-        document.getElementById('login-err').classList.add('hidden');
-        openModal('modal-login');
-        setTimeout(()=>document.getElementById('login-inp').focus(),200);
-    }
-};
-window.submitLogin = () => {
-    if (document.getElementById('login-inp').value===ADMIN_PASS) { localStorage.setItem('isSergAdmin','true'); location.reload(); }
-    else { document.getElementById('login-err').classList.remove('hidden'); document.getElementById('login-inp').value=''; }
-};
-document.getElementById('login-inp').addEventListener('keydown',e=>{ if(e.key==='Enter') window.submitLogin(); });
 
 // ── Language ──────────────────────────────────────────
-window.changeLang = (l) => {
-    lang=l; const t=i18n[l];
-    const set = (id,val) => { const el=document.getElementById(id); if(el) el.innerText=val; };
-    set('main-title',t.title);
-    set('label-work',t.work); set('label-vacation',t.vacation); set('label-sick',t.sick);
-    set('login-btn', isAdmin?t.logout:t.login);
-    set('hint-box', isAdmin?t.hintAdmin:t.hint);
-    document.querySelector('.tab-lbl-cal').innerText=t.tabCal;
-    document.querySelector('.tab-lbl-tacho').innerText=t.tabTacho;
-    // Day modal
-    set('lbl-sec-type',t.secType); set('lbl-sec-tacho',t.secTacho);
-    set('chip-work-lbl',t.work); set('chip-vacation-lbl',t.vacation); set('chip-sick-lbl',t.sick);
-    set('d-lbl-start',t.start); set('d-lbl-end',t.end); set('d-lbl-driving',t.driving);
-    set('d-lbl-9h',t.tog9h); set('d-desc-9h',t.desc9h);
-    set('d-btn-save',t.save); set('d-btn-cancel',t.cancel); set('d-lbl-delete',t.deleteDay);
-    // Tacho modal
-    set('t-lbl-start',t.start); set('t-lbl-end',t.end); set('t-lbl-driving',t.driving);
-    set('t-lbl-9h',t.tog9h); set('t-desc-9h',t.desc9h);
-    set('t-btn-save',t.save); set('t-btn-cancel',t.cancel); set('t-lbl-delete',t.deleteDay);
-    // Tacho stats
-    set('tacho-stats-title',t.weekStats); set('lbl-driving-hours',t.drivingH);
-    set('lbl-ext10',t.ext10); set('lbl-ext15',t.ext15); set('lbl-short-rests',t.shortRests);
-    set('lbl-week-from',t.weekFrom);
-    // Login
-    set('lbl-login-title',t.loginTitle); set('lbl-login-desc',t.loginDesc);
-    set('lbl-login-btn',t.loginBtn); set('lbl-login-cancel',t.cancel); set('login-err',t.loginErr);
+window._changeLang = (l) => {
+    lang = l;
+    const t = i18n[l];
+    const set = (id, val) => { const el = document.getElementById(id); if (el) el.innerText = val; };
 
-    if(window.calendar){ window.calendar.setOption('locale',l); window.calendar.refetchEvents(); }
-    // Only re-render tacho if that tab is currently visible
-    if(document.getElementById('tab-tacho').style.display !== 'none') renderTachoWeek();
-};
+    set('main-title', t.title);
+    set('label-work', t.work); set('label-vacation', t.vacation); set('label-sick', t.sick);
+    set('login-btn', isAdmin ? t.logout : t.login);
+    set('hint-box', isAdmin ? t.hintAdmin : t.hint);
+    document.querySelector('.tab-lbl-cal').innerText   = t.tabCal;
+    document.querySelector('.tab-lbl-tacho').innerText = t.tabTacho;
+    set('lbl-sec-type', t.secType); set('lbl-sec-tacho', t.secTacho);
+    set('chip-work-lbl', t.work); set('chip-vacation-lbl', t.vacation); set('chip-sick-lbl', t.sick);
+    set('d-lbl-start', t.start); set('d-lbl-end', t.end); set('d-lbl-driving', t.driving);
+    set('d-lbl-9h', t.tog9h); set('d-desc-9h', t.desc9h);
+    set('d-btn-save', t.save); set('d-btn-cancel', t.cancel); set('d-lbl-delete', t.deleteDay);
+    set('t-lbl-start', t.start); set('t-lbl-end', t.end); set('t-lbl-driving', t.driving);
+    set('t-lbl-9h', t.tog9h); set('t-desc-9h', t.desc9h);
+    set('t-btn-save', t.save); set('t-btn-cancel', t.cancel); set('t-lbl-delete', t.deleteDay);
+    set('tacho-stats-title', t.weekStats);
+    set('lbl-driving-hours', t.drivingH); set('lbl-ext10', t.ext10);
+    set('lbl-ext15', t.ext15); set('lbl-short-rests', t.shortRests);
+    set('lbl-last-rest', t.lastRest); set('lbl-compensation', t.compensation);
+    set('lbl-week-from', t.weekFrom);
+    set('lbl-login-title', t.loginTitle); set('lbl-login-desc', t.loginDesc);
+    set('lbl-login-btn', t.loginBtn); set('lbl-login-cancel', t.cancel);
+    set('login-err', t.loginErr);
 
-// ── Tabs ──────────────────────────────────────────────
-window.switchTab = (tab) => {
-    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.tab===tab));
-    document.getElementById('tab-calendar').style.display = tab==='calendar'?'':'none';
-    document.getElementById('tab-tacho').style.display    = tab==='tacho'?'':'none';
-    document.getElementById('report-btn').style.display   = tab==='calendar'?'':'none';
-    if(tab==='tacho') renderTachoWeek();
-    if(tab==='calendar' && window.calendar) setTimeout(()=>window.calendar.updateSize(), 50);
-};
-
-// ── Calendar ──────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', ()=>{
-    if(isAdmin){
-        document.body.classList.add('is-admin');
-        document.getElementById('tabs-row').style.display='flex';
-        document.getElementById('admin-badge').style.display='inline-block';
+    if (window.calendar) {
+        window.calendar.setOption('locale', l);
+        window.calendar.refetchEvents();
     }
-    const calEl=document.getElementById('calendar');
-    window.calendar=new FullCalendar.Calendar(calEl,{
-        initialView:'dayGridMonth', locale:lang, firstDay:1,
-        selectable: isAdmin,
-        headerToolbar:{left:'prev,next',center:'title',right:'today'},
-        datesSet: ()=>refreshStats(),
-        events: async (info,cb)=>{
-            const {data:cd}=await supabase.from('work_days').select('*');
-            allCalData=cd||[];
-            refreshStats();
-            cb(allCalData.map(d=>({
-                title:i18n[lang][d.type]||d.type, start:d.date, allDay:true, className:`type-${d.type}`
-            })));
-            // Add tacho markers
-            const {data:td}=await supabase.from('driving_days').select('date');
-            setTimeout(()=>markTachoDays((td||[]).map(r=>r.date)),150);
-        },
-        dateClick: (info)=>{ if(!isAdmin) return; editingDates=[info.dateStr]; openDayModal(info.dateStr,false); },
-        select: (info)=>{
-            if(!isAdmin) return;
-            editingDates=[];
-            let c=new Date(info.start); const e=new Date(info.end);
-            while(c<e){ editingDates.push(formatDate(c)); c.setDate(c.getDate()+1); }
-            openDayModal(editingDates[0], editingDates.length>1);
-        }
-    });
-    window.calendar.render();
-    window.changeLang(lang);
+    if (document.getElementById('tab-tacho').style.display !== 'none') {
+        renderTachoWeek(getLang);
+    }
+};
+
+// ── Close modals on backdrop click ────────────────────
+document.querySelectorAll('.modal-backdrop').forEach(b => {
+    b.addEventListener('click', e => { if (e.target === b) b.classList.remove('open'); });
 });
 
-function markTachoDays(dates){
-    document.querySelectorAll('.has-tacho').forEach(el=>el.classList.remove('has-tacho'));
-    dates.forEach(ds=>{ const el=document.querySelector(`[data-date="${ds}"]`); if(el) el.classList.add('has-tacho'); });
-}
-
-async function openDayModal(primaryDate, isMulti){
-    const t=i18n[lang];
-    const d=parseLocal(primaryDate);
-    document.getElementById('modal-day-title').innerText =
-        `${t.dayNames[d.getDay()]}, ${fmt(d)}` + (isMulti?` (+${editingDates.length-1})`:'');
-
-    const existing=allCalData.find(r=>r.date===primaryDate);
-    selectChip(existing?.type||null, true);
-
-    // Tacho section only for single day
-    document.getElementById('day-tacho-section').style.display = (!isMulti && editingDayType==='work')?'':'none';
-
-    if(!isMulti){ await loadTachoIntoDay(primaryDate); }
-
-    document.getElementById('d-btn-delete').style.display = existing?'':'none';
-    openModal('modal-day');
-}
-
-async function loadTachoIntoDay(dateStr){
-    const {data}=await supabase.from('driving_days').select('*').eq('date',dateStr).maybeSingle();
-    document.getElementById('d-inp-start').value  = data?.start_time?.slice(0,5)||'';
-    document.getElementById('d-inp-end').value    = data?.end_time?.slice(0,5)||'';
-    document.getElementById('d-inp-driving').value= data?.driving_hours ? decimalToTime(parseFloat(data.driving_hours)) : '';
-    setToggle('d-tog-9h',!!data?.reduced_rest_9h);
-    updateAutoInfo('d');
-}
-
-window.selectChip = (type, silent=false) => {
-    editingDayType=type;
-    ['work','vacation','sick'].forEach(tp=>{
-        document.getElementById(`chip-${tp}`).className='type-chip'+(tp===type?` sel-${tp}`:'');
-    });
-    if(!silent){
-        const isMulti=editingDates.length>1;
-        document.getElementById('day-tacho-section').style.display=(!isMulti&&type==='work')?'':'none';
-    }
-};
-
-window.saveDay = async()=>{
-    if(!editingDayType){ toast('⚠ '+i18n[lang].secType+'!'); return; }
-    await supabase.from('work_days').upsert(editingDates.map(d=>({date:d,type:editingDayType})));
-    if(editingDates.length===1 && editingDayType==='work'){
-        const s=document.getElementById('d-inp-start').value||null;
-        const e=document.getElementById('d-inp-end').value||null;
-        const drTime=document.getElementById('d-inp-driving').value;
-        const dr=timeToDecimal(drTime);
-        const {ext10:e10, ext15:e15}=calcAuto(drTime, s, e);
-        const r9h=document.getElementById('d-tog-9h').classList.contains('on');
-        if(s||e||dr>0||e10||e15||r9h){
-            await supabase.from('driving_days').upsert({
-                date:editingDates[0], start_time:s, end_time:e, driving_hours:dr,
-                used_extended_10:e10, used_extended_15:e15,
-                reduced_rest_9h:r9h, short_breaks_count:0
-            }, { onConflict: 'date' });
-        }
-    }
-    closeModal('modal-day');
-    toast(i18n[lang].save+' ✓');
-    window.calendar.unselect();
-    window.calendar.refetchEvents();
-};
-
-window.deleteDay = async()=>{
-    await supabase.from('work_days').delete().in('date',editingDates);
-    await supabase.from('driving_days').delete().in('date',editingDates);
-    closeModal('modal-day');
-    window.calendar.unselect();
-    window.calendar.refetchEvents();
-};
-
-function refreshStats(){
-    if(!allCalData||!window.calendar) return;
-    const v=window.calendar.getDate(); const m=v.getMonth(),y=v.getFullYear();
-    const c={work:0,vacation:0,sick:0};
-    allCalData.forEach(item=>{ const d=parseLocal(item.date); if(d.getMonth()===m&&d.getFullYear()===y) c[item.type]++; });
-    document.getElementById('stat-work').innerText=c.work;
-    document.getElementById('stat-vacation').innerText=c.vacation;
-    document.getElementById('stat-sick').innerText=c.sick;
-}
-
-window.generateReport = ()=>{
-    const date=window.calendar.getDate();
-    const mn=date.toLocaleString(lang,{month:'long',year:'numeric'});
-    const t=i18n[lang];
-    const r=`📊 ${t.reportHeader}\n📅 ${mn}\n------------------\n✅ ${t.work}: ${document.getElementById('stat-work').innerText}\n🌴 ${t.vacation}: ${document.getElementById('stat-vacation').innerText}\n🏥 ${t.sick}: ${document.getElementById('stat-sick').innerText}`;
-    navigator.clipboard.writeText(r).then(()=>toast(t.reportCopied));
-};
-
-// ── Tachograph tab ────────────────────────────────────
-window.shiftWeek = dir=>{
-    tachoWeekStart=addDays(tachoWeekStart,dir*7);
-    document.getElementById('week-start-picker').value=tachoWeekStart;
-    renderTachoWeek();
-};
-window.onWeekStartPicked = ()=>{
-    tachoWeekStart=document.getElementById('week-start-picker').value;
-    renderTachoWeek();
-};
-
-function timeToDecimal(t){ if(!t) return 0; const [h,m]=t.split(':').map(Number); return h+(m||0)/60; }
-function decimalToTime(v){ if(!v&&v!==0) return ''; const h=Math.floor(v); const m=Math.round((v-h)*60); return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`; }
-
-function calcAuto(drivingVal, startVal, endVal) {
-    const driving = timeToDecimal(drivingVal);
-    const ext10 = driving > 9;
-    let ext15 = false;
-    if (startVal && endVal) {
-        let workH = timeToDecimal(endVal) - timeToDecimal(startVal);
-        if (workH < 0) workH += 24; // overnight
-        ext15 = workH > 15;
-    }
-    return { ext10, ext15, driving };
-}
-
-function updateAutoInfo(prefix) {
-    const driving = document.getElementById(`${prefix}-inp-driving`).value;
-    const start   = document.getElementById(`${prefix}-inp-start`).value;
-    const end     = document.getElementById(`${prefix}-inp-end`).value;
-    const { ext10, ext15 } = calcAuto(driving, start, end);
-    const infoEl  = document.getElementById(`${prefix}-auto-info`);
-    const textEl  = document.getElementById(`${prefix}-auto-text`);
-    if (!infoEl || !textEl) return;
-    const parts = [];
-    if (ext10) parts.push('✅ +10h їзди');
-    if (ext15) parts.push('✅ +15h робочий день');
-    if (parts.length) {
-        textEl.textContent = parts.join('  |  ');
-        infoEl.style.display = '';
-    } else {
-        infoEl.style.display = 'none';
-    }
-}
-
-window.autoCalcDay   = () => updateAutoInfo('d');
-window.autoCalcTacho = () => updateAutoInfo('t');
-
-async function renderTachoWeek(){
-    const {data}=await supabase.from('driving_days').select('*');
-    const all=data||[];
-    const t=i18n[lang];
-    const ws=tachoWeekStart;
-    const we=addDays(ws,6);
-    document.getElementById('week-start-picker').value=ws;
-    document.getElementById('week-end-label').innerText=`→ ${fmt(parseLocal(we))}`;
-
-    const weekDates=[]; for(let i=0;i<7;i++) weekDates.push(addDays(ws,i));
-    const wd=all.filter(r=> weekDates.includes(r.date?.slice(0,10)));
-
-    const totalDr=wd.reduce((s,r)=>s+(parseFloat(r.driving_hours)||0),0);
-    const e10=wd.filter(r=>r.used_extended_10).length;
-    const e15=wd.filter(r=>r.used_extended_15).length;
-    const sr=wd.filter(r=>r.reduced_rest_9h).length;
-
-    setBar('driving',totalDr,56,`${totalDr.toFixed(1)}/56h`);
-    setBar('ext10',e10,2,`${e10}/2`);
-    setBar('ext15',e15,2,`${e15}/2`);
-    setBar('short-rests',sr,3,`${sr}/3`);
-
-    const list=document.getElementById('days-list'); list.innerHTML='';
-    weekDates.forEach(ds=>{
-        const d=parseLocal(ds); const rec=wd.find(r=>r.date?.slice(0,10)===ds);
-        const dn=t.dayNames[d.getDay()];
-        const row=document.createElement('div');
-        row.className='day-row'+(rec?' has-data':'')+(isAdmin?' clickable':'');
-        if(isAdmin) row.onclick=()=>openTachoModal(ds,rec||null);
-
-        let right='';
-        if(rec){
-            const ts=rec.start_time&&rec.end_time?`${rec.start_time.slice(0,5)} — ${rec.end_time.slice(0,5)}`:'';
-            const badges=[];
-            if(rec.used_extended_10) badges.push(`<span class="badge badge-10">+10h</span>`);
-            if(rec.used_extended_15) badges.push(`<span class="badge badge-15">+15h</span>`);
-            if(rec.reduced_rest_9h)  badges.push(`<span class="badge badge-9h">9h↓</span>`);
-            if(rec.short_breaks_count>0) badges.push(`<span class="badge" style="background:var(--bg);color:var(--muted)">${rec.short_breaks_count}×45'</span>`);
-            const dh=parseFloat(rec.driving_hours)||0;
-            right=`<div class="text-right">${ts?`<p class="day-hours">${ts}</p>`:''}${dh>0?`<p class="text-[10px] text-[var(--muted)]" style="font-family:var(--mono)">🚗 ${dh}h</p>`:''}${badges.length?`<div class="flex gap-1 justify-end mt-1">${badges.join('')}</div>`:''}</div>`;
-        } else if(isAdmin){
-            right=`<span class="text-[11px] text-[var(--accent)]" style="font-family:var(--mono)">+ dodaj</span>`;
-        }
-        row.innerHTML=`<div class="flex justify-between items-center"><div><p class="day-name">${dn}</p><p class="day-date">${d.getDate()}.${String(d.getMonth()+1).padStart(2,'0')}</p></div>${right}</div>`;
-        list.appendChild(row);
-    });
-}
-
-function setBar(id,val,max,label){
-    const pct=Math.min((val/max)*100,100);
-    const bar=document.getElementById(`bar-${id}`);
-    const el=document.getElementById(`val-${id}`);
-    if(!bar||!el) return;
-    bar.style.width=pct+'%';
-    el.innerText=label;
-    el.style.color=pct>=100?'var(--red)':pct>=75?'var(--orange)':'var(--accent)';
-    el.style.fontFamily='var(--mono)';
-    el.style.fontSize='0.6rem';
-    el.style.fontWeight='600';
-}
-
-// ── Tacho-only modal ──────────────────────────────────
-function openTachoModal(dateStr,existing){
-    editingTachoDate=dateStr;
-    const d=parseLocal(dateStr); const t=i18n[lang];
-    document.getElementById('modal-tacho-date').innerText=`${t.dayNames[d.getDay()]}, ${fmt(d)}`;
-    document.getElementById('t-inp-start').value=existing?.start_time?.slice(0,5)||'';
-    document.getElementById('t-inp-end').value=existing?.end_time?.slice(0,5)||'';
-    document.getElementById('t-inp-driving').value= existing?.driving_hours ? decimalToTime(parseFloat(existing.driving_hours)) : '';
-    setToggle('t-tog-9h',!!existing?.reduced_rest_9h);
-    document.getElementById('t-btn-delete').style.display=existing?'':'none';
-    updateAutoInfo('t');
-    openModal('modal-tacho');
-}
-
-window.saveTacho = async()=>{
-    const drTime=document.getElementById('t-inp-driving').value;
-    const s=document.getElementById('t-inp-start').value||null;
-    const e=document.getElementById('t-inp-end').value||null;
-    const {ext10, ext15, driving}=calcAuto(drTime, s, e);
-    await supabase.from('driving_days').upsert({
-        date:editingTachoDate,
-        start_time:s, end_time:e, driving_hours:driving,
-        used_extended_10:ext10, used_extended_15:ext15,
-        reduced_rest_9h:document.getElementById('t-tog-9h').classList.contains('on'),
-        short_breaks_count:0,
-    }, { onConflict: 'date' });
-    closeModal('modal-tacho');
-    toast(i18n[lang].save+' ✓');
-    renderTachoWeek();
-};
-
-window.deleteTacho = async()=>{
-    await supabase.from('driving_days').delete().eq('date',editingTachoDate);
-    closeModal('modal-tacho');
-    renderTachoWeek();
-};
-
-// ── Backdrop click to close ───────────────────────────
-document.querySelectorAll('.modal-backdrop').forEach(b=>{
-    b.addEventListener('click',e=>{ if(e.target===b) b.classList.remove('open'); });
+// ── Init ──────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+    applyAdminUI();
+    initAuth(getLang);
+    initCalendar(getLang);
+    window._changeLang(lang);
 });
 </script>
 </body>
