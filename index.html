@@ -520,11 +520,7 @@ async function loadTachoIntoDay(dateStr){
     document.getElementById('d-inp-start').value  = data?.start_time?.slice(0,5)||'';
     document.getElementById('d-inp-end').value    = data?.end_time?.slice(0,5)||'';
     document.getElementById('d-inp-driving').value= data?.driving_hours ? decimalToTime(parseFloat(data.driving_hours)) : '';
-    setToggle('d-tog-10',!!data?.used_extended_10);
-    setToggle('d-tog-15',!!data?.used_extended_15);
     setToggle('d-tog-9h',!!data?.reduced_rest_9h);
-    dBreaks=data?.short_breaks_count||0;
-    document.getElementById('d-val-breaks') && (document.getElementById('d-val-breaks').innerText=dBreaks);
     updateAutoInfo('d');
 }
 
@@ -706,11 +702,7 @@ function openTachoModal(dateStr,existing){
     document.getElementById('t-inp-start').value=existing?.start_time?.slice(0,5)||'';
     document.getElementById('t-inp-end').value=existing?.end_time?.slice(0,5)||'';
     document.getElementById('t-inp-driving').value= existing?.driving_hours ? decimalToTime(parseFloat(existing.driving_hours)) : '';
-    setToggle('t-tog-10',!!existing?.used_extended_10);
-    setToggle('t-tog-15',!!existing?.used_extended_15);
     setToggle('t-tog-9h',!!existing?.reduced_rest_9h);
-    tBreaks=existing?.short_breaks_count||0;
-    document.getElementById('t-val-breaks') && (document.getElementById('t-val-breaks').innerText=tBreaks);
     document.getElementById('t-btn-delete').style.display=existing?'':'none';
     updateAutoInfo('t');
     openModal('modal-tacho');
