@@ -1,0 +1,59 @@
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+
+export const supabase = createClient(
+    'https://unyztaiglminylhbinsy.supabase.co',
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVueXp0YWlnbG1pbnlsaGJpbnN5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM1MjUwMzQsImV4cCI6MjA4OTEwMTAzNH0.aD-HFhE9XnPM_V0TBz7UJ_7lBGszSj0olz1CSkmcw_k'
+);
+
+export const ADMIN_PASS = '2026';
+
+export const i18n = {
+    pl: {
+        title: 'Serhii Kolomiiets',
+        work: 'Praca', vacation: 'Urlop', sick: 'Choroba',
+        login: 'Login', logout: 'Wyloguj',
+        hint: 'Tryb podglądu', hintAdmin: 'Kliknij dzień aby edytować',
+        reportHeader: 'Podsumowanie: Serhii Kolomiiets', reportCopied: 'Raport skopiowany!',
+        tabCal: 'Kalendarz', tabTacho: 'Tachograf',
+        secType: 'Typ dnia', secTacho: 'Dane tachografu',
+        weekFrom: 'od', weekStats: 'Podsumowanie tygodnia',
+        drivingH: 'Godziny jazdy',
+        ext10: 'Wydłużone dni jazdy (10h)',
+        ext15: 'Wydłużone dni pracy (15h)',
+        shortRests: 'Skrócone odpoczynki (9h)',
+        lastRest: 'Ostatni odpoczynek',
+        compensation: 'Kompensacja tygodniowa',
+        compensationNone: 'brak długu',
+        start: 'Początek', end: 'Koniec', driving: 'Godziny jazdy',
+        tog9h: 'Skrócony odpoczynek (9h)', desc9h: 'auto lub ręcznie',
+        save: 'Zapisz', cancel: 'Anuluj', deleteDay: 'Usuń dzień',
+        loginTitle: 'Logowanie', loginDesc: 'Wpisz hasło administratora',
+        loginBtn: 'Zaloguj', loginErr: 'Błędne hasło!',
+        autoInfo: { ext10: '🚛 +10h jazdy', ext15: '⏱ +15h dzień', rest9h: '😴 Skrócony odpoczynek (9h)', restNormal: '✅ Normalny odpoczynek', restWeekly45: '✅ Odpoczynek tygodniowy (45h+)', restWeekly24: '⚠️ Skrócony odp. tygodniowy (24–45h)' },
+        dayNames: ['Nd', 'Pn', 'Wt', 'Śr', 'Cz', 'Pt', 'Sb'],
+    },
+    uk: {
+        title: 'Сергій Коломієць',
+        work: 'Робота', vacation: 'Відпустка', sick: 'Хвороба',
+        login: 'Увійти', logout: 'Вийти',
+        hint: 'Режим перегляду', hintAdmin: 'Натисніть день для редагування',
+        reportHeader: 'Звіт: Сергій Коломієць', reportCopied: 'Звіт скопійовано!',
+        tabCal: 'Календар', tabTacho: 'Тахограф',
+        secType: 'Тип дня', secTacho: 'Дані тахографа',
+        weekFrom: 'від', weekStats: 'Підсумок тижня',
+        drivingH: 'Годин їзди',
+        ext10: 'Подовжені дні їзди (10г)',
+        ext15: 'Подовжені робочі дні (15г)',
+        shortRests: 'Скорочені відпочинки (9г)',
+        lastRest: 'Останній відпочинок',
+        compensation: 'Компенсація тижнева',
+        compensationNone: 'без боргу',
+        start: 'Початок', end: 'Кінець', driving: 'Годин їзди',
+        tog9h: 'Скорочений відпочинок (9г)', desc9h: 'авто або вручну',
+        save: 'Зберегти', cancel: 'Скасувати', deleteDay: 'Видалити день',
+        loginTitle: 'Вхід', loginDesc: 'Введіть пароль адміністратора',
+        loginBtn: 'Увійти', loginErr: 'Невірний пароль!',
+        autoInfo: { ext10: '🚛 +10г їзди', ext15: '⏱ +15г день', rest9h: '😴 Скорочений відпочинок (9г)', restNormal: '✅ Нормальний відпочинок', restWeekly45: '✅ Тижневий відпочинок (45г+)', restWeekly24: '⚠️ Скорочений тижн. відпочинок (24–45г)' },
+        dayNames: ['Нд', 'Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
+    }
+};
