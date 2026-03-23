@@ -1,12 +1,12 @@
-import { supabase } from './config.js';
-import { i18n } from './config.js';
+import { supabase } from './config.js?v=3';
+import { i18n } from './config.js?v=3';
 import { isAdmin } from './auth.js';
 import {
     formatDate, parseLocal, addDays, fmtDisplay, todayStr,
     timeToDecimal, decimalToTime, calcDayAuto, calcWeeklyCompensation,
     showToast, openModal, closeModal, setToggle
-} from './utils.js';
-import { updateAutoInfo } from './calendar.js';
+} from './utils.js?v=3';
+import { updateAutoInfo } from './calendar.js?v=3';
 
 export let tachoWeekStart = todayStr();
 let editingTachoDate = null;

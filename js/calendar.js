@@ -1,11 +1,11 @@
-import { supabase } from './config.js';
-import { i18n } from './config.js';
+import { supabase } from './config.js?v=3';
+import { i18n } from './config.js?v=3';
 import { isAdmin } from './auth.js';
 import {
     formatDate, parseLocal, addDays, fmtDisplay,
     timeToDecimal, decimalToTime, calcDayAuto,
     showToast, openModal, closeModal, setToggle
-} from './utils.js';
+} from './utils.js?v=3';
 
 let allCalData = [];
 let editingDates = [];
@@ -194,7 +194,10 @@ export function updateAutoInfo(prefix, getLang) {
 
     const parts = [];
     if (start && end && workHours > 0) {
-        parts.push(`⏱ ${workHours.toFixed(1)}г роботи`);
+        const wH = Math.floor(workHours);
+        const wM = Math.round((workHours - wH) * 60);
+        const wStr = `${String(wH).padStart(2,'0')}:${String(wM).padStart(2,'0')}`;
+        parts.push(`⏱ ${wStr} роботи`);
     }
     if (ext10) parts.push(t.autoInfo.ext10);
     if (ext15) parts.push(t.autoInfo.ext15);
