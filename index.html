@@ -208,16 +208,16 @@
      MAIN: bootstrap all modules
 ══════════════════════════════════════════ -->
 <script type="module">
-import { i18n }                                  from './js/config.js';
+import { i18n }                                  from './js/config.js?v=3';
 import { isAdmin, initAuth, handleAuth,
-         submitLogin, applyAdminUI }              from './js/auth.js';
+         submitLogin, applyAdminUI }              from './js/auth.js?v=3';
 import { initCalendar, selectChip, saveDay,
          deleteDay, updateAutoInfo,
-         generateReport }                         from './js/calendar.js';
+         generateReport }                         from './js/calendar.js?v=3';
 import { tachoWeekStart, shiftWeek,
          onWeekStartPicked, renderTachoWeek,
-         saveTacho, deleteTacho }                 from './js/tacho.js';
-import { closeModal }                             from './js/utils.js';
+         saveTacho, deleteTacho }                 from './js/tacho.js?v=3';
+import { closeModal }                             from './js/utils.js?v=3';
 
 // ── Language state ────────────────────────────────────
 let lang = 'pl';
