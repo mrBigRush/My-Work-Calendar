@@ -42,10 +42,22 @@ export async function renderTachoWeek(getLang) {
     const wd = all.filter(r => weekDates.includes(r.date));
 
     // ── Weekly stats ──
-    const totalDr  = wd.reduce((s, r) => s + (parseFloat(r.driving_hours) || 0), 0);
+    // driving_hours може бути десятковим (7.9) або рядком часу ("07:54") — обробляємо обидва
+    const parseDriving = (val) => {
+        if (!val) return 0;
+        const str = String(val);
+        if (str.includes(':')) return timeToDecimal(str);
+        return parseFloat(str) || 0;
+    };
+    const totalDr  = wd.reduce((s, r) => s + parseDriving(r.driving_hours), 0);
     const e10      = wd.filter(r => r.used_extended_10).length;
     const e15      = wd.filter(r => r.used_extended_15).length;
     const sr       = wd.filter(r => r.reduced_rest_9h).length;
+
+    // Format total driving as HH:MM / 56:00
+    const totalDrH = Math.floor(totalDr);
+    const totalDrM = Math.round((totalDr - totalDrH) * 60);
+    const totalDrStr = `${totalDrH}:${String(totalDrM).padStart(2,'0')}`;
 
     // Last rest before week start: find the day just before week
     const dayBeforeWeek = all.find(r => r.date === addDays(ws, -1));
@@ -63,7 +75,7 @@ export async function renderTachoWeek(getLang) {
         if (rest >= 24 && rest < 45) compensationOwed += (45 - rest);
     });
 
-    setBar('driving',     totalDr, 56, `${totalDr.toFixed(1)}/56h`);
+    setBar('driving',     totalDr, 56, `${totalDrStr}/56:00`);
     setBar('ext10',       e10,     2,  `${e10}/2`);
     setBar('ext15',       e15,     2,  `${e15}/2`);
     setBar('short-rests', sr,      3,  `${sr}/3`);
@@ -95,14 +107,17 @@ export async function renderTachoWeek(getLang) {
             if (rec.used_extended_10) badges.push(`<span class="badge badge-10">+10h</span>`);
             if (rec.used_extended_15) badges.push(`<span class="badge badge-15">+15h</span>`);
             if (rec.reduced_rest_9h)  badges.push(`<span class="badge badge-9h">9h↓</span>`);
-            const dh = parseFloat(rec.driving_hours) || 0;
+            const dh = parseDriving(rec.driving_hours);
+            const dhH = Math.floor(dh);
+            const dhM = Math.round((dh - dhH) * 60);
+            const dhStr = dh > 0 ? `${String(dhH).padStart(2,'0')}:${String(dhM).padStart(2,'0')}` : '';
             // Show rest hours between days
             const rh = parseFloat(rec.rest_hours);
             if (rh > 0) badges.push(`<span class="badge" style="background:var(--bg);color:var(--muted)">↩ ${rh.toFixed(1)}h</span>`);
 
             right = `<div class="text-right">
                 ${ts ? `<p class="day-hours">${ts}</p>` : ''}
-                ${dh > 0 ? `<p class="text-[10px] text-[var(--muted)]" style="font-family:var(--mono)">🚗 ${dh.toFixed(1)}h</p>` : ''}
+                ${dhStr ? `<p class="text-[10px] text-[var(--muted)]" style="font-family:var(--mono)">🚗 ${dhStr}</p>` : ''}
                 ${badges.length ? `<div class="flex gap-1 justify-end mt-1 flex-wrap">${badges.join('')}</div>` : ''}
             </div>`;
         } else if (isAdmin) {
