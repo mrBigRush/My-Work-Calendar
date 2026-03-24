@@ -10,6 +10,7 @@ import { updateAutoInfo } from './calendar.js?v=3';
 
 export let tachoWeekStart = todayStr();
 let editingTachoDate = null;
+let tachoWeekManuallySet = false;
 
 // ── Helpers ───────────────────────────────────────────
 function parseDriving(val) {
@@ -27,12 +28,14 @@ function decimalToHHMM(val) {
 
 // ── Week navigation ───────────────────────────────────
 export function shiftWeek(dir) {
+    tachoWeekManuallySet = true;
     tachoWeekStart = addDays(tachoWeekStart, dir * 7);
     document.getElementById('week-start-picker').value = tachoWeekStart;
-    renderTachoWeek(null); // getLang injected via window
+    renderTachoWeek(null);
 }
 
 export function onWeekStartPicked() {
+    tachoWeekManuallySet = true;
     tachoWeekStart = document.getElementById('week-start-picker').value;
     renderTachoWeek(null);
 }
@@ -44,6 +47,39 @@ export async function renderTachoWeek(getLang) {
 
     const { data } = await supabase.from('driving_days').select('*');
     const all = (data || []).map(r => ({ ...r, date: r.date?.slice(0, 10) }));
+
+    // Auto-detect week start: перший день після останньої паузи ≥ 24г
+    if (!tachoWeekManuallySet && all.length > 0) {
+        // Сортуємо по даті
+        const sorted = [...all].sort((a, b) => a.date > b.date ? 1 : -1);
+
+        let weekStartCandidate = sorted[0].date;
+
+        for (let i = 1; i < sorted.length; i++) {
+            const prev = sorted[i - 1];
+            const curr = sorted[i];
+
+            // Пауза між кінцем вчора і початком сьогодні
+            let restHours = null;
+            if (prev.end_time && curr.start_time) {
+                restHours = timeToDecimal(curr.start_time) - timeToDecimal(prev.end_time);
+                if (restHours < 0) restHours += 24;
+            } else {
+                // Якщо немає часу — рахуємо паузу по датах
+                const prevDate = parseLocal(prev.date);
+                const currDate = parseLocal(curr.date);
+                const daysDiff = (currDate - prevDate) / (1000 * 60 * 60 * 24);
+                if (daysDiff >= 2) restHours = daysDiff * 24;
+            }
+
+            // Якщо пауза ≥ 24г — новий тиждень починається з цього дня
+            if (restHours !== null && restHours >= 24) {
+                weekStartCandidate = curr.date;
+            }
+        }
+
+        tachoWeekStart = weekStartCandidate;
+    }
 
     const ws = tachoWeekStart;
     const we = addDays(ws, 6);
