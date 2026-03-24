@@ -13,16 +13,10 @@ let editingTachoDate = null;
 let tachoWeekManuallySet = false;
 
 // ── Helpers ───────────────────────────────────────────
-function parseDriving(val) {
-    if (!val) return 0;
-    const str = String(val);
-    if (str.includes(':')) return timeToDecimal(str);
-    return parseFloat(str) || 0;
-}
-
 function decimalToHHMM(val) {
-    const h = Math.floor(val);
-    const m = Math.round((val - h) * 60);
+    const totalMin = Math.round(val * 60);
+    const h = Math.floor(totalMin / 60);
+    const m = totalMin % 60;
     return `${h}:${String(m).padStart(2,'0')}`;
 }
 
@@ -31,220 +25,138 @@ export function shiftWeek(dir) {
     tachoWeekManuallySet = true;
     tachoWeekStart = addDays(tachoWeekStart, dir * 7);
     document.getElementById('week-start-picker').value = tachoWeekStart;
-    renderTachoWeek(null);
+    renderTachoWeek(() => document.documentElement.lang || 'pl');
 }
 
 export function onWeekStartPicked() {
     tachoWeekManuallySet = true;
     tachoWeekStart = document.getElementById('week-start-picker').value;
-    renderTachoWeek(null);
+    renderTachoWeek(() => document.documentElement.lang || 'pl');
 }
 
-// ── Main render ───────────────────────────────────────
+// ── Rendering ─────────────────────────────────────────
 export async function renderTachoWeek(getLang) {
-    const lang = getLang ? getLang() : window._getLang();
-    const t = i18n[lang];
+    const container = document.getElementById('tacho-cards');
+    container.innerHTML = '<div class="p-8 text-center text-muted animate-pulse">Завантаження...</div>';
 
-    const { data } = await supabase.from('driving_days').select('*');
-    const all = (data || []).map(r => ({ ...r, date: r.date?.slice(0, 10) }));
+    const { data: allData, error } = await supabase
+        .from('driving_days')
+        .select('*')
+        .order('date', { ascending: true });
 
-    // Auto-detect week start: перший день після останньої паузи ≥ 24г
-    if (!tachoWeekManuallySet && all.length > 0) {
-        // Сортуємо по даті
-        const sorted = [...all].sort((a, b) => a.date > b.date ? 1 : -1);
-
-        let weekStartCandidate = sorted[0].date;
-
-        for (let i = 1; i < sorted.length; i++) {
-            const prev = sorted[i - 1];
-            const curr = sorted[i];
-
-            // Пауза між кінцем вчора і початком сьогодні
-            let restHours = null;
-            if (prev.end_time && curr.start_time) {
-                restHours = timeToDecimal(curr.start_time) - timeToDecimal(prev.end_time);
-                if (restHours < 0) restHours += 24;
-            } else {
-                // Якщо немає часу — рахуємо паузу по датах
-                const prevDate = parseLocal(prev.date);
-                const currDate = parseLocal(curr.date);
-                const daysDiff = (currDate - prevDate) / (1000 * 60 * 60 * 24);
-                if (daysDiff >= 2) restHours = daysDiff * 24;
-            }
-
-            // Якщо пауза ≥ 24г — новий тиждень починається з цього дня
-            if (restHours !== null && restHours >= 24) {
-                weekStartCandidate = curr.date;
-            }
-        }
-
-        tachoWeekStart = weekStartCandidate;
+    if (error) {
+        container.innerHTML = `<div class="p-4 text-red-500">Помилка: ${error.message}</div>`;
+        return;
     }
 
-    const ws = tachoWeekStart;
-    const we = addDays(ws, 6);
-    document.getElementById('week-start-picker').value = ws;
-    document.getElementById('week-end-label').innerText = `→ ${fmtDisplay(parseLocal(we))}`;
+    // ЛОГІКА АВТО-ВИЗНАЧЕННЯ ТИЖНЯ (з урахуванням пауз > 24г та пропущених днів)
+    if (!tachoWeekManuallySet && allData && allData.length > 0) {
+        let detectedStart = allData[0].date;
+        for (let i = 1; i < allData.length; i++) {
+            const prev = allData[i - 1];
+            const curr = allData[i];
+            const d1 = parseLocal(prev.date);
+            const d2 = parseLocal(curr.date);
+            const diffDays = (d2 - d1) / (1000 * 60 * 60 * 24);
 
-    const weekDates = [];
-    for (let i = 0; i < 7; i++) weekDates.push(addDays(ws, i));
-
-    const wd = all.filter(r => weekDates.includes(r.date));
-
-    // ── Weekly stats ──
-    const totalDr = wd.reduce((s, r) => s + parseDriving(r.driving_hours), 0);
-    const e10     = wd.filter(r => r.used_extended_10).length;
-    const e15     = wd.filter(r => r.used_extended_15).length;
-    const sr      = wd.filter(r => r.reduced_rest_9h).length;
-    const totalDrStr = decimalToHHMM(totalDr);
-
-    // Last rest before week start: find the day just before week
-    const dayBeforeWeek = all.find(r => r.date === addDays(ws, -1));
-    const firstDayOfWeek = wd.find(r => r.date === ws);
-    let lastRestHours = null;
-    if (dayBeforeWeek?.end_time && firstDayOfWeek?.start_time) {
-        lastRestHours = timeToDecimal(firstDayOfWeek.start_time) - timeToDecimal(dayBeforeWeek.end_time);
-        if (lastRestHours < 0) lastRestHours += 24;
+            if (diffDays > 1 || (prev.rest_hours && prev.rest_hours >= 24)) {
+                detectedStart = curr.date;
+            }
+        }
+        tachoWeekStart = detectedStart;
+        document.getElementById('week-start-picker').value = tachoWeekStart;
     }
 
-    // Compensation: sum of (45 - rest) for all 24–45h rests in week
-    let compensationOwed = 0;
-    wd.forEach(r => {
-        const rest = parseFloat(r.rest_hours);
-        if (rest >= 24 && rest < 45) compensationOwed += (45 - rest);
+    const endOfWeek = addDays(tachoWeekStart, 6);
+    const weekData = allData.filter(d => d.date >= tachoWeekStart && d.date <= endOfWeek);
+
+    container.innerHTML = '';
+
+    // СТАТИСТИКА
+    let totalDriving = 0;
+    let count10h = 0;
+    let count15h = 0;
+    let count9h = 0;
+    let lastRestVal = 0;
+
+    weekData.forEach(day => {
+        const dVal = parseFloat(day.driving_hours) || 0;
+        totalDriving += dVal;
+        if (day.used_extended_10) count10h++;
+        if (day.used_extended_15) count15h++;
+        if (day.reduced_rest_9h) count9h++;
+        if (day.rest_hours) lastRestVal = day.rest_hours;
     });
 
-    setBar('driving',     totalDr, 56, `${totalDrStr}/56:00`);
-    setBar('ext10',       e10,     2,  `${e10}/2`);
-    setBar('ext15',       e15,     2,  `${e15}/2`);
-    setBar('short-rests', sr,      3,  `${sr}/3`);
+    document.getElementById('val-driving-hours').innerText = `${decimalToHHMM(totalDriving)} / 56h`;
+    document.getElementById('val-ext10').innerText = `${count10h} / 2`;
+    document.getElementById('val-ext15').innerText = `${count15h} / 3`;
+    document.getElementById('val-short-rests').innerText = `${count9h} / 3`;
+    document.getElementById('val-last-rest').innerText = lastRestVal > 0 ? lastRestVal.toFixed(1) + 'h' : '—';
 
-    // Last rest info
-    updateRestInfo(lastRestHours, t);
-
-    // Compensation info
-    updateCompensationInfo(compensationOwed, t);
-
-    // ── Day rows ──
-    const list = document.getElementById('days-list');
-    list.innerHTML = '';
-
-    weekDates.forEach(ds => {
-        const d   = parseLocal(ds);
-        const rec = wd.find(r => r.date === ds);
-        const dn  = t.dayNames[d.getDay()];
-
-        const row = document.createElement('div');
-        row.className = 'day-row' + (rec ? ' has-data' : '') + (isAdmin ? ' clickable' : '');
-        if (isAdmin) row.onclick = () => openTachoModal(ds, rec || null, getLang || (() => window._getLang()));
-
-        let right = '';
-        if (rec) {
-            const ts = rec.start_time && rec.end_time
-                ? `${rec.start_time.slice(0, 5)} — ${rec.end_time.slice(0, 5)}` : '';
-            const badges = [];
-            if (rec.used_extended_10) badges.push(`<span class="badge badge-10">+10h</span>`);
-            if (rec.used_extended_15) badges.push(`<span class="badge badge-15">+15h</span>`);
-            if (rec.reduced_rest_9h)  badges.push(`<span class="badge badge-9h">9h↓</span>`);
-            const dh = parseDriving(rec.driving_hours);
-            const dhStr = dh > 0 ? decimalToHHMM(dh) : '';
-            // Show rest hours between days
-            const rh = parseFloat(rec.rest_hours);
-            if (rh > 0) badges.push(`<span class="badge" style="background:var(--bg);color:var(--muted)">↩ ${rh.toFixed(1)}h</span>`);
-
-            right = `<div class="text-right">
-                ${ts ? `<p class="day-hours">${ts}</p>` : ''}
-                ${dhStr ? `<p class="text-[10px] text-[var(--muted)]" style="font-family:var(--mono)">🚗 ${dhStr}</p>` : ''}
-                ${badges.length ? `<div class="flex gap-1 justify-end mt-1 flex-wrap">${badges.join('')}</div>` : ''}
-            </div>`;
-        } else if (isAdmin) {
-            right = `<span class="text-[11px] text-[var(--accent)]" style="font-family:var(--mono)">+ dodaj</span>`;
-        }
-
-        row.innerHTML = `<div class="flex justify-between items-center">
-            <div><p class="day-name">${dn}</p><p class="day-date">${d.getDate()}.${String(d.getMonth()+1).padStart(2,'0')}</p></div>
-            ${right}
-        </div>`;
-        list.appendChild(row);
-    });
-}
-
-function updateRestInfo(hours, t) {
-    const el = document.getElementById('rest-info-block');
-    if (!el) return;
-    if (hours === null) { el.style.display = 'none'; return; }
-    el.style.display = '';
-    const valEl = document.getElementById('val-last-rest');
-    let color = 'var(--accent)';
-    let label = `${hours.toFixed(1)}h`;
-    if (hours < 9)        { color = 'var(--red)';    label += ' ⚠'; }
-    else if (hours < 11)  { color = 'var(--orange)'; label += ' (9h↓)'; }
-    else if (hours >= 45) { color = 'var(--accent)'; label += ' (tygodniowy)'; }
-    if (valEl) { valEl.innerText = label; valEl.style.color = color; }
-}
-
-function updateCompensationInfo(hours, t) {
-    const el = document.getElementById('compensation-block');
-    if (!el) return;
-    if (hours <= 0) {
-        document.getElementById('val-compensation').innerText = t.compensationNone;
-        document.getElementById('val-compensation').style.color = 'var(--accent)';
+    // Компенсація
+    const comp = calcWeeklyCompensation(weekData, allData);
+    const compEl = document.getElementById('val-compensation');
+    if (comp.compensationOwed > 0) {
+        compEl.innerText = `+${comp.compensationOwed.toFixed(1)}h`;
+        compEl.className = 'font-bold text-orange-600';
     } else {
-        document.getElementById('val-compensation').innerText = `+${hours.toFixed(1)}h`;
-        document.getElementById('val-compensation').style.color = 'var(--red)';
+        compEl.innerText = i18n[getLang()]?.compensationNone || 'brak';
+        compEl.className = 'text-muted';
     }
+
+    if (weekData.length === 0) {
+        container.innerHTML = '<div class="p-8 text-center text-muted">Немає даних</div>';
+        return;
+    }
+
+    weekData.forEach(day => {
+        const card = document.createElement('div');
+        card.className = 'bg-white border border-[var(--border)] rounded-2xl p-4 shadow-sm relative';
+        if (isAdmin) card.classList.add('cursor-pointer', 'hover:border-[var(--accent)]');
+        card.onclick = () => { if(isAdmin) openTachoModal(day.date, getLang); };
+        card.innerHTML = `
+            <div class="flex justify-between items-start mb-2">
+                <span class="font-bold text-sm" style="font-family:var(--mono)">${fmtDisplay(parseLocal(day.date))}</span>
+                <span class="text-[10px] uppercase px-2 py-0.5 rounded-full bg-[var(--accent-light)] text-[var(--accent)] font-bold">
+                    ${decimalToHHMM(day.driving_hours)}H
+                </span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-[11px] text-muted">
+                <div>Start: <span class="text-[var(--text)]">${day.start_time || '--:--'}</span></div>
+                <div>End: <span class="text-[var(--text)]">${day.end_time || '--:--'}</span></div>
+                <div>Rest: <span class="text-[var(--text)]">${day.rest_hours ? day.rest_hours.toFixed(1)+'h' : '--'}</span></div>
+            </div>
+        `;
+        container.appendChild(card);
+    });
 }
 
-function setBar(id, val, max, label) {
-    const pct = Math.min((val / max) * 100, 100);
-    const bar = document.getElementById(`bar-${id}`);
-    const el  = document.getElementById(`val-${id}`);
-    if (!bar || !el) return;
-    bar.style.width = pct + '%';
-    el.innerText = label;
-    el.style.color = pct >= 100 ? 'var(--red)' : pct >= 75 ? 'var(--orange)' : 'var(--accent)';
-    el.style.fontFamily  = 'var(--mono)';
-    el.style.fontSize    = '0.6rem';
-    el.style.fontWeight  = '600';
-}
-
-// ── Tacho modal ───────────────────────────────────────
-async function openTachoModal(dateStr, existing, getLang) {
+// ── Modal Actions ─────────────────────────────────────
+export async function openTachoModal(dateStr, getLang) {
     editingTachoDate = dateStr;
-    const lang = getLang();
-    const t = i18n[lang];
-    const d = parseLocal(dateStr);
-    document.getElementById('modal-tacho-date').innerText =
-        `${t.dayNames[d.getDay()]}, ${fmtDisplay(d)}`;
+    const { data: existing } = await supabase.from('driving_days').select('*').eq('date', dateStr).single();
+    const { data: prevDays } = await supabase.from('driving_days').select('end_time').lt('date', dateStr).order('date', {desc:true}).limit(1);
+    
+    const prevEnd = prevDays?.[0]?.end_time || null;
+    document.getElementById('t-inp-start').dataset.prevEnd = prevEnd || '';
 
-    // Load prev day end_time
-    const prevDate = addDays(dateStr, -1);
-    const { data: prevData } = await supabase.from('driving_days')
-        .select('end_time').eq('date', prevDate).maybeSingle();
-
-    // Set prevEnd FIRST, then populate fields
-    document.getElementById('t-inp-start').dataset.prevEnd = prevData?.end_time?.slice(0, 5) || '';
-
-    document.getElementById('t-inp-start').value   = existing?.start_time?.slice(0, 5) || '';
-    document.getElementById('t-inp-end').value     = existing?.end_time?.slice(0, 5) || '';
-    document.getElementById('t-inp-driving').value = existing?.driving_hours
-        ? decimalToTime(parseFloat(existing.driving_hours)) : '';
-    setToggle('t-tog-9h', !!existing?.reduced_rest_9h); // залишаємо для відображення але не зберігаємо вручну
-
+    document.getElementById('t-inp-start').value = existing?.start_time || '';
+    document.getElementById('t-inp-end').value = existing?.end_time || '';
+    document.getElementById('t-inp-driving').value = existing?.driving_hours ? decimalToTime(parseFloat(existing.driving_hours)) : '';
+    
     document.getElementById('t-btn-delete').style.display = existing ? '' : 'none';
     updateAutoInfo('t', getLang);
     openModal('modal-tacho');
 }
 
 export async function saveTacho(getLang) {
-    const lang = getLang();
     const s = document.getElementById('t-inp-start').value || null;
     const e = document.getElementById('t-inp-end').value || null;
     const drTime = document.getElementById('t-inp-driving').value;
     const prevEnd = document.getElementById('t-inp-start').dataset.prevEnd || null;
 
-    const { ext10, ext15, reduced_rest_9h, restHours } =
-        calcDayAuto(drTime, s, e, prevEnd);
+    const { ext10, ext15, reduced_rest_9h, restHours } = calcDayAuto(drTime, s, e, prevEnd);
 
     await supabase.from('driving_days').upsert({
         date: editingTachoDate,
@@ -253,16 +165,16 @@ export async function saveTacho(getLang) {
         used_extended_10: ext10, used_extended_15: ext15,
         reduced_rest_9h: reduced_rest_9h,
         rest_hours: restHours !== null ? parseFloat(restHours.toFixed(2)) : null,
-        short_breaks_count: 0,
     }, { onConflict: 'date' });
 
     closeModal('modal-tacho');
-    showToast(i18n[lang].save + ' ✓');
     renderTachoWeek(getLang);
+    showToast(i18n[getLang()].reportCopied); 
 }
 
 export async function deleteTacho(getLang) {
+    if (!confirm('Видалити цей день?')) return;
     await supabase.from('driving_days').delete().eq('date', editingTachoDate);
     closeModal('modal-tacho');
     renderTachoWeek(getLang);
-}
+        }
