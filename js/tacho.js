@@ -42,7 +42,9 @@ export function onWeekStartPicked() {
 
 // ── Main render ───────────────────────────────────────
 export async function renderTachoWeek(getLang) {
-    const lang = getLang ? getLang() : window._getLang();
+    const lang = typeof getLang === 'function'
+    ? getLang()
+    : (typeof window._getLang === 'function' ? window._getLang() : 'en');
     const t = i18n[lang];
 
     const { data } = await supabase.from('driving_days').select('*');
