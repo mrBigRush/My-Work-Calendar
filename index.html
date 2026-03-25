@@ -36,7 +36,7 @@
     <div id="tabs-row" style="display:none" class="gap-2 mb-4 bg-white p-1.5 rounded-xl border border-[var(--border)]">
         <button class="tab-btn active flex-1" data-tab="calendar" onclick="window._switchTab('calendar')">📅 <span class="tab-lbl-cal">Kalendarz</span></button>
         <button class="tab-btn flex-1" data-tab="tacho" onclick="window._switchTab('tacho')">🚛 <span class="tab-lbl-tacho">Tachograf</span></button>
-        <button onclick="openTab('bank')">Bank</button>
+        <button class="tab-btn flex-1" data-tab="bank" onclick="window._switchTab('bank')">🏦 <span>Bank</span></button>
     </div>
 
     <!-- ══════════════════════════════
@@ -75,7 +75,7 @@
         <!-- ══════════════════════════════
          TAB: BANK
     ══════════════════════════════ -->
-        <div id="bank-tab" style="display:none;">
+        <div id="tab-bank" style="display:none;">
 
 <h3>Month</h3>
 <div>Days: <span id="bank-month-worked"></span></div>
@@ -260,7 +260,6 @@ import { tachoWeekStart, shiftWeek,
          saveTacho, deleteTacho }                 from './js/tacho.js';
 import { closeModal }                             from './js/utils.js';
     
-<script type="module" src="js/bank.js"></script>
     
 // ── Language state ────────────────────────────────────
 let lang = 'pl';
@@ -288,8 +287,10 @@ window._switchTab = (tab) => {
         b.classList.toggle('active', b.dataset.tab === tab));
     document.getElementById('tab-calendar').style.display = tab === 'calendar' ? '' : 'none';
     document.getElementById('tab-tacho').style.display    = tab === 'tacho'    ? '' : 'none';
+    document.getElementById('tab-bank').style.display     = tab === 'bank'     ? '' : 'none';
     document.getElementById('report-btn').style.display   = tab === 'calendar' ? '' : 'none';
     if (tab === 'tacho')    renderTachoWeek(getLang);
+    if (tab === 'bank')     import('./js/bank.js').then(m => m.renderBank());
     if (tab === 'calendar' && window.calendar) setTimeout(() => window.calendar.updateSize(), 50);
 };
 
