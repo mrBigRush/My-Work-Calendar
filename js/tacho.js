@@ -88,7 +88,8 @@ export async function renderTachoWeek(getLang) {
     const weekDates = [];
     for (let i = 0; i < 7; i++) weekDates.push(addDays(ws, i));
 
-    const wd = all.filter(r => weekDates.includes(r.date));
+    const wd = all.filter(r => 
+    weekDates.includes(String(r.date).slice(0, 10)));
 
     // ── Weekly stats ──
     const totalDr = wd.reduce((s, r) => s + parseDriving(r.driving_hours), 0);
@@ -102,16 +103,16 @@ export async function renderTachoWeek(getLang) {
     const firstDayOfWeek = wd.find(r => r.date === ws);
     let lastRestHours = null;
     if (dayBeforeWeek?.end_time && firstDayOfWeek?.start_time) {
-        lastRestHours = timeToDecimal(firstDayOfWeek.start_time) - timeToDecimal(dayBeforeWeek.end_time);
+        lastRestHourlet compensationOwed = 0;
+wd.forEach(r => {
+    const rest = parseFloat(r.rest_hours);
+    if (rest >= 24 && rest < 45) compensationOwed += (45 - rest);});
+        s = timeToDecimal(firstDayOfWeek.start_time) - timeToDecimal(dayBeforeWeek.end_time);
         if (lastRestHours < 0) lastRestHours += 24;
     }
 
     // Compensation: sum of (45 - rest) for all 24–45h rests in week
-    let compensationOwed = 0;
-    wd.forEach(r => {
-        const rest = parseFloat(r.rest_hours);
-        if (rest >= 24 && rest < 45) compensationOwed += (45 - rest);
-    });
+    
 
     setBar('driving',     totalDr, 56, `${totalDrStr}/56:00`);
     setBar('ext10',       e10,     2,  `${e10}/2`);
