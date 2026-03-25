@@ -91,7 +91,7 @@ export async function renderTachoWeek(getLang) {
     for (let i = 0; i < 7; i++) weekDates.push(addDays(ws, i));
 
     const wd = all.filter(r => 
-    weekDates.includes(String(r.date).slice(0, 10)));
+    weekDates.includes(r.date);
 
     // ── Weekly stats ──
     const totalDr = wd.reduce((s, r) => s + parseDriving(r.driving_hours), 0);
