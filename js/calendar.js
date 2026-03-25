@@ -1,11 +1,11 @@
-import { supabase } from './config.js?v=3';
-import { i18n } from './config.js?v=3';
+import { supabase } from './config.js';
+import { i18n } from './config.js';
 import { isAdmin } from './auth.js';
 import {
     formatDate, parseLocal, addDays, fmtDisplay,
     timeToDecimal, decimalToTime, calcDayAuto,
     showToast, openModal, closeModal, setToggle
-} from './utils.js?v=3';
+} from './utils.js';
 
 let allCalData = [];
 let editingDates = [];

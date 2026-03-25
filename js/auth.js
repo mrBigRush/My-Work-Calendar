@@ -1,5 +1,5 @@
-import { ADMIN_PASS, i18n } from './config.js?v=3';
-import { openModal, closeModal } from './utils.js?v=3';
+import { ADMIN_PASS, i18n } from './config.js';
+import { openModal, closeModal } from './utils.js';
 
 export let isAdmin = localStorage.getItem('isSergAdmin') === 'true';
 

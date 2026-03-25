@@ -1,12 +1,12 @@
-import { supabase } from './config.js?v=3';
-import { i18n } from './config.js?v=3';
+import { supabase } from './config.js';
+import { i18n } from './config.js';
 import { isAdmin } from './auth.js';
 import {
     formatDate, parseLocal, addDays, fmtDisplay, todayStr,
     timeToDecimal, decimalToTime, calcDayAuto, calcWeeklyCompensation,
     showToast, openModal, closeModal, setToggle
-} from './utils.js?v=3';
-import { updateAutoInfo } from './calendar.js?v=3';
+} from './utils.js';
+import { updateAutoInfo } from './calendar.js';
 
 export let tachoWeekStart = todayStr();
 let editingTachoDate = null;
@@ -50,30 +50,29 @@ export async function renderTachoWeek(getLang) {
 
     // Auto-detect week start: перший день після останньої паузи ≥ 24г
     if (!tachoWeekManuallySet && all.length > 0) {
-        // Сортуємо по даті
         const sorted = [...all].sort((a, b) => a.date > b.date ? 1 : -1);
-
         let weekStartCandidate = sorted[0].date;
 
         for (let i = 1; i < sorted.length; i++) {
             const prev = sorted[i - 1];
             const curr = sorted[i];
 
-            // Пауза між кінцем вчора і початком сьогодні
-            let restHours = null;
+            // Рахуємо паузу враховуючи різницю в датах
+            const prevDate = parseLocal(prev.date);
+            const currDate = parseLocal(curr.date);
+            const daysDiff = (currDate - prevDate) / (1000 * 60 * 60 * 24);
+
+            let restHours = 0;
             if (prev.end_time && curr.start_time) {
-                restHours = timeToDecimal(curr.start_time) - timeToDecimal(prev.end_time);
-                if (restHours < 0) restHours += 24;
+                // Точний розрахунок: (дні між датами * 24) + час початку - час кінця
+                const endDecimal   = timeToDecimal(prev.end_time);
+                const startDecimal = timeToDecimal(curr.start_time);
+                restHours = (daysDiff - 1) * 24 + (24 - endDecimal) + startDecimal;
             } else {
-                // Якщо немає часу — рахуємо паузу по датах
-                const prevDate = parseLocal(prev.date);
-                const currDate = parseLocal(curr.date);
-                const daysDiff = (currDate - prevDate) / (1000 * 60 * 60 * 24);
-                if (daysDiff >= 2) restHours = daysDiff * 24;
+                restHours = daysDiff * 24;
             }
 
-            // Якщо пауза ≥ 24г — новий тиждень починається з цього дня
-            if (restHours !== null && restHours >= 24) {
+            if (restHours >= 24) {
                 weekStartCandidate = curr.date;
             }
         }
@@ -150,7 +149,7 @@ export async function renderTachoWeek(getLang) {
             const dhStr = dh > 0 ? decimalToHHMM(dh) : '';
             // Show rest hours between days
             const rh = parseFloat(rec.rest_hours);
-            if (rh > 0) badges.push(`<span class="badge" style="background:var(--bg);color:var(--muted)">↩ ${rh.toFixed(1)}h</span>`);
+            if (rh > 0) badges.push(`<span class="badge" style="background:var(--bg);color:var(--muted)">↩ ${decimalToHHMM(rh)}</span>`);
 
             right = `<div class="text-right">
                 ${ts ? `<p class="day-hours">${ts}</p>` : ''}
@@ -176,10 +175,10 @@ function updateRestInfo(hours, t) {
     el.style.display = '';
     const valEl = document.getElementById('val-last-rest');
     let color = 'var(--accent)';
-    let label = `${hours.toFixed(1)}h`;
+    let label = decimalToHHMM(hours);
     if (hours < 9)        { color = 'var(--red)';    label += ' ⚠'; }
     else if (hours < 11)  { color = 'var(--orange)'; label += ' (9h↓)'; }
-    else if (hours >= 45) { color = 'var(--accent)'; label += ' (tygodniowy)'; }
+    else if (hours >= 45) { color = 'var(--accent)'; label += ' (45h+)'; }
     if (valEl) { valEl.innerText = label; valEl.style.color = color; }
 }
 
@@ -199,13 +198,13 @@ function setBar(id, val, max, label) {
     const pct = Math.min((val / max) * 100, 100);
     const bar = document.getElementById(`bar-${id}`);
     const el  = document.getElementById(`val-${id}`);
-    if (!bar || !el) return;
+    if (!bar || !el) { console.warn('setBar: element not found', id); return; }
     bar.style.width = pct + '%';
     el.innerText = label;
-    el.style.color = pct >= 100 ? 'var(--red)' : pct >= 75 ? 'var(--orange)' : 'var(--accent)';
-    el.style.fontFamily  = 'var(--mono)';
-    el.style.fontSize    = '0.6rem';
-    el.style.fontWeight  = '600';
+    el.style.setProperty('color', pct >= 100 ? 'var(--red)' : pct >= 75 ? 'var(--orange)' : 'var(--accent)', 'important');
+    el.style.setProperty('font-family', 'var(--mono)', 'important');
+    el.style.setProperty('font-size', '0.6rem', 'important');
+    el.style.setProperty('font-weight', '600', 'important');
 }
 
 // ── Tacho modal ───────────────────────────────────────
