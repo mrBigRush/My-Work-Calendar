@@ -36,6 +36,7 @@
     <div id="tabs-row" style="display:none" class="gap-2 mb-4 bg-white p-1.5 rounded-xl border border-[var(--border)]">
         <button class="tab-btn active flex-1" data-tab="calendar" onclick="window._switchTab('calendar')">📅 <span class="tab-lbl-cal">Kalendarz</span></button>
         <button class="tab-btn flex-1" data-tab="tacho" onclick="window._switchTab('tacho')">🚛 <span class="tab-lbl-tacho">Tachograf</span></button>
+        <button onclick="openTab('bank')">Bank</button>
     </div>
 
     <!-- ══════════════════════════════
@@ -69,6 +70,27 @@
                 <p id="week-end-label" class="text-[10px] text-[var(--muted)]" style="font-family:var(--mono)"></p>
             </div>
             <button class="week-nav-btn" onclick="window._shiftWeek(1)">→</button>
+        </div>
+
+        <!-- ══════════════════════════════
+         TAB: BANK
+    ══════════════════════════════ -->
+        <div id="bank-tab" style="display:none;">
+
+<h3>Month</h3>
+<div>Days: <span id="bank-month-worked"></span></div>
+<div>Projected: <span id="bank-month-projected"></span> €</div>
+<div>Actual: <span id="bank-month-actual"></span> €</div>
+
+<h3>Year</h3>
+<div>Days: <span id="bank-year-worked"></span></div>
+<div>Projected: <span id="bank-year-projected"></span> €</div>
+<div>Actual: <span id="bank-year-actual"></span> €</div>
+
+<button onclick="openModal()">+ Add Payment</button>
+
+<div id="bank-payments"></div>
+
         </div>
 
         <!-- Weekly stats -->
@@ -187,6 +209,25 @@
 </div>
 
 <!-- ══════════════════════════════════════════
+     MODAL: Bank
+══════════════════════════════════════════ -->
+<div id="bank-modal" style="display:none;">
+    <input type="date" id="pay-date">
+    <input type="number" id="pay-amount" placeholder="Amount">
+    
+    <select id="pay-type">
+        <option value="bank">Bank</option>
+        <option value="cash">Cash</option>
+    </select>
+
+    <input type="text" id="pay-note" placeholder="Note">
+
+    <button onclick="addPayment()">Save</button>
+    <button onclick="closeModal()">Cancel</button>
+</div>
+
+    
+<!-- ══════════════════════════════════════════
      MODAL: Login  (прикріплено до верху)
 ══════════════════════════════════════════ -->
 <div id="modal-login" class="modal-backdrop" style="align-items:flex-start;padding-top:3rem">
@@ -218,7 +259,9 @@ import { tachoWeekStart, shiftWeek,
          onWeekStartPicked, renderTachoWeek,
          saveTacho, deleteTacho }                 from './js/tacho.js';
 import { closeModal }                             from './js/utils.js';
-
+    
+<script type="module" src="js/bank.js"></script>
+    
 // ── Language state ────────────────────────────────────
 let lang = 'pl';
 const getLang = () => lang;
