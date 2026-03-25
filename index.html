@@ -76,7 +76,7 @@
             <p id="tacho-stats-title" class="stat-label text-[var(--muted)] mb-3">Podsumowanie tygodnia</p>
             <div class="space-y-3">
                 <div>
-                    <div class="flex justify-between mb-1"><span class="text-xs font-medium" id="lbl-driving-hours">Godziny jazdy</span><span id="val-driving-hours" class="stat-label">0/56h</span></div>
+                    <div class="flex justify-between mb-1"><span class="text-xs font-medium" id="lbl-driving-hours">Godziny jazdy</span><span id="val-driving-hours" style="font-family:var(--mono);font-size:0.6rem;font-weight:600;color:var(--accent)">0:00/56:00</span></div>
                     <div class="week-bar-bg"><div id="bar-driving" class="week-bar-fill bg-[var(--accent)]" style="width:0%"></div></div>
                 </div>
                 <div>
@@ -208,16 +208,16 @@
      MAIN: bootstrap all modules
 ══════════════════════════════════════════ -->
 <script type="module">
-import { i18n }                                  from './js/config.js?v=3';
+import { i18n }                                  from './js/config.js';
 import { isAdmin, initAuth, handleAuth,
-         submitLogin, applyAdminUI }              from './js/auth.js?v=3';
+         submitLogin, applyAdminUI }              from './js/auth.js';
 import { initCalendar, selectChip, saveDay,
          deleteDay, updateAutoInfo,
-         generateReport }                         from './js/calendar.js?v=3';
+         generateReport }                         from './js/calendar.js';
 import { tachoWeekStart, shiftWeek,
          onWeekStartPicked, renderTachoWeek,
-         saveTacho, deleteTacho }                 from './js/tacho.js?v=3';
-import { closeModal }                             from './js/utils.js?v=3';
+         saveTacho, deleteTacho }                 from './js/tacho.js';
+import { closeModal }                             from './js/utils.js';
 
 // ── Language state ────────────────────────────────────
 let lang = 'pl';
