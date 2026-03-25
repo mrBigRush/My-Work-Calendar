@@ -17,7 +17,7 @@ function parseDriving(val) {
     if (!val) return 0;
     const str = String(val);
     if (str.includes(':')) return timeToDecimal(str);
-    return parseFloat(str.replace(',', '.')) || 0;
+    return parseFloat(str) || 0;
 }
 
 function decimalToHHMM(val) {
@@ -42,15 +42,11 @@ export function onWeekStartPicked() {
 
 // ── Main render ───────────────────────────────────────
 export async function renderTachoWeek(getLang) {
-    const lang = typeof getLang === 'function'
-    ? getLang()
-    : (typeof window._getLang === 'function' ? window._getLang() : 'en');
+    const lang = getLang ? getLang() : window._getLang();
     const t = i18n[lang];
 
     const { data } = await supabase.from('driving_days').select('*');
-    const all = (data || []).map(r => ({
-    ...r,
-    date: r.date ? new Date(r.date).toISOString().slice(0, 10) : null}));
+    const all = (data || []).map(r => ({ ...r, date: r.date?.slice(0, 10) }));
 
     // Auto-detect week start: перший день після останньої паузи ≥ 24г
     if (!tachoWeekManuallySet && all.length > 0) {
@@ -92,8 +88,7 @@ export async function renderTachoWeek(getLang) {
     const weekDates = [];
     for (let i = 0; i < 7; i++) weekDates.push(addDays(ws, i));
 
-    const wd = all.filter(r => 
-    weekDates.includes(r.date);
+    const wd = all.filter(r => weekDates.includes(r.date));
 
     // ── Weekly stats ──
     const totalDr = wd.reduce((s, r) => s + parseDriving(r.driving_hours), 0);
@@ -102,29 +97,21 @@ export async function renderTachoWeek(getLang) {
     const sr      = wd.filter(r => r.reduced_rest_9h).length;
     const totalDrStr = decimalToHHMM(totalDr);
 
-   // Last rest before week start
-const dayBeforeWeek = all.find(r => r.date === addDays(ws, -1));
-const firstDayOfWeek = wd.find(r => r.date === ws);
-
-let lastRestHours = null;
-
-if (dayBeforeWeek?.end_time && firstDayOfWeek?.start_time) {
-    lastRestHours =
-        timeToDecimal(firstDayOfWeek.start_time) -
-        timeToDecimal(dayBeforeWeek.end_time);
-
-    if (lastRestHours < 0) lastRestHours += 24;}
+    // Last rest before week start: find the day just before week
+    const dayBeforeWeek = all.find(r => r.date === addDays(ws, -1));
+    const firstDayOfWeek = wd.find(r => r.date === ws);
+    let lastRestHours = null;
+    if (dayBeforeWeek?.end_time && firstDayOfWeek?.start_time) {
+        lastRestHours = timeToDecimal(firstDayOfWeek.start_time) - timeToDecimal(dayBeforeWeek.end_time);
+        if (lastRestHours < 0) lastRestHours += 24;
+    }
 
     // Compensation: sum of (45 - rest) for all 24–45h rests in week
-
-
     let compensationOwed = 0;
-
     wd.forEach(r => {
-    const rest = parseFloat(r.rest_hours) || 0;
-    if (rest >= 24 && rest < 45) {
-        compensationOwed += (45 - rest);}});
-    
+        const rest = parseFloat(r.rest_hours);
+        if (rest >= 24 && rest < 45) compensationOwed += (45 - rest);
+    });
 
     setBar('driving',     totalDr, 56, `${totalDrStr}/56:00`);
     setBar('ext10',       e10,     2,  `${e10}/2`);
@@ -161,7 +148,7 @@ if (dayBeforeWeek?.end_time && firstDayOfWeek?.start_time) {
             const dh = parseDriving(rec.driving_hours);
             const dhStr = dh > 0 ? decimalToHHMM(dh) : '';
             // Show rest hours between days
-            const rh = parseFloat(rec.rest_hours) || 0;
+            const rh = parseFloat(rec.rest_hours);
             if (rh > 0) badges.push(`<span class="badge" style="background:var(--bg);color:var(--muted)">↩ ${decimalToHHMM(rh)}</span>`);
 
             right = `<div class="text-right">
