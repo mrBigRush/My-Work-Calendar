@@ -46,7 +46,9 @@ export async function renderTachoWeek(getLang) {
     const t = i18n[lang];
 
     const { data } = await supabase.from('driving_days').select('*');
-    const all = (data || []).map(r => ({ ...r, date: r.date?.slice(0, 10) }));
+    const all = (data || []).map(r => ({
+    ...r,
+    date: r.date ? new Date(r.date).toISOString().slice(0, 10) : null}));
 
     // Auto-detect week start: перший день після останньої паузи ≥ 24г
     if (!tachoWeekManuallySet && all.length > 0) {
