@@ -17,7 +17,7 @@ function parseDriving(val) {
     if (!val) return 0;
     const str = String(val);
     if (str.includes(':')) return timeToDecimal(str);
-    return parseFloat(str) || 0;
+    return parseFloat(str.replace(',', '.')) || 0;
 }
 
 function decimalToHHMM(val) {
@@ -112,6 +112,14 @@ if (dayBeforeWeek?.end_time && firstDayOfWeek?.start_time) {
     if (lastRestHours < 0) lastRestHours += 24;}
 
     // Compensation: sum of (45 - rest) for all 24–45h rests in week
+
+
+    let compensationOwed = 0;
+
+    wd.forEach(r => {
+    const rest = parseFloat(r.rest_hours) || 0;
+    if (rest >= 24 && rest < 45) {
+        compensationOwed += (45 - rest);}});
     
 
     setBar('driving',     totalDr, 56, `${totalDrStr}/56:00`);
@@ -149,7 +157,7 @@ if (dayBeforeWeek?.end_time && firstDayOfWeek?.start_time) {
             const dh = parseDriving(rec.driving_hours);
             const dhStr = dh > 0 ? decimalToHHMM(dh) : '';
             // Show rest hours between days
-            const rh = parseFloat(rec.rest_hours);
+            const rh = parseFloat(rec.rest_hours) || 0;
             if (rh > 0) badges.push(`<span class="badge" style="background:var(--bg);color:var(--muted)">↩ ${decimalToHHMM(rh)}</span>`);
 
             right = `<div class="text-right">
