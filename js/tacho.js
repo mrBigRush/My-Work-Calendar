@@ -98,18 +98,18 @@ export async function renderTachoWeek(getLang) {
     const sr      = wd.filter(r => r.reduced_rest_9h).length;
     const totalDrStr = decimalToHHMM(totalDr);
 
-    // Last rest before week start: find the day just before week
-    const dayBeforeWeek = all.find(r => r.date === addDays(ws, -1));
-    const firstDayOfWeek = wd.find(r => r.date === ws);
-    let lastRestHours = null;
-    if (dayBeforeWeek?.end_time && firstDayOfWeek?.start_time) {
-        lastRestHourlet compensationOwed = 0;
-wd.forEach(r => {
-    const rest = parseFloat(r.rest_hours);
-    if (rest >= 24 && rest < 45) compensationOwed += (45 - rest);});
-        s = timeToDecimal(firstDayOfWeek.start_time) - timeToDecimal(dayBeforeWeek.end_time);
-        if (lastRestHours < 0) lastRestHours += 24;
-    }
+   // Last rest before week start
+const dayBeforeWeek = all.find(r => r.date === addDays(ws, -1));
+const firstDayOfWeek = wd.find(r => r.date === ws);
+
+let lastRestHours = null;
+
+if (dayBeforeWeek?.end_time && firstDayOfWeek?.start_time) {
+    lastRestHours =
+        timeToDecimal(firstDayOfWeek.start_time) -
+        timeToDecimal(dayBeforeWeek.end_time);
+
+    if (lastRestHours < 0) lastRestHours += 24;}
 
     // Compensation: sum of (45 - rest) for all 24–45h rests in week
     
