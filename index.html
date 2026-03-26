@@ -294,7 +294,10 @@ window._switchTab = (tab) => {
     document.getElementById('tab-bank').style.display     = tab === 'bank'     ? '' : 'none';
     document.getElementById('report-btn').style.display   = tab === 'calendar' ? '' : 'none';
     if (tab === 'tacho')    renderTachoWeek(getLang);
-    if (tab === 'bank') renderBank();
+    if (tab === 'bank') {
+        document.getElementById('bank-payments').innerHTML = 'WORKING...';
+        renderBank();
+    }
     if (tab === 'calendar' && window.calendar) setTimeout(() => window.calendar.updateSize(), 50);
 };
 
