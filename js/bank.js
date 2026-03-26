@@ -8,6 +8,209 @@ import {
 
 let currentMonth = new Date();
 let editingSalaryRecord = null;
+let stylesAdded = false;
+
+export function addSalaryStyles() {
+    if (stylesAdded) return;
+    stylesAdded = true;
+    
+    const style = document.createElement('style');
+    style.textContent = `
+        /* Salary Tab Styles */
+        .salary-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+        
+        .salary-stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 0.75rem;
+            text-align: center;
+        }
+        
+        .salary-stat-label {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--muted);
+        }
+        
+        .salary-stat-value {
+            font-family: var(--mono);
+            font-size: 1.25rem;
+            font-weight: 700;
+            line-height: 1.2;
+        }
+        
+        .transaction-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            transition: all 0.15s;
+        }
+        
+        .transaction-item.clickable {
+            cursor: pointer;
+        }
+        
+        .transaction-item.clickable:hover {
+            border-color: var(--accent);
+            background: var(--accent-light);
+        }
+        
+        .transaction-date {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--muted);
+        }
+        
+        .transaction-type {
+            font-family: var(--mono);
+            font-size: 0.65rem;
+            background: var(--bg);
+            padding: 0.15rem 0.5rem;
+            border-radius: 12px;
+            display: inline-block;
+            margin-top: 0.25rem;
+        }
+        
+        .transaction-note {
+            font-family: var(--mono);
+            font-size: 0.6rem;
+            color: var(--muted);
+            margin-top: 0.25rem;
+        }
+        
+        .transaction-amount {
+            font-family: var(--mono);
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        
+        .transaction-amount.positive {
+            color: var(--accent);
+        }
+        
+        .transaction-amount.negative {
+            color: var(--red);
+        }
+        
+        .chart-container {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 120px;
+            gap: 4px;
+            padding: 0.5rem 0;
+        }
+        
+        .chart-bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .chart-bars {
+            display: flex;
+            gap: 3px;
+            align-items: flex-end;
+            height: 90px;
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .chart-bar {
+            width: 12px;
+            border-radius: 4px 4px 0 0;
+            transition: height 0.3s ease;
+        }
+        
+        .chart-bar.actual {
+            background: var(--accent);
+        }
+        
+        .chart-label {
+            font-family: var(--mono);
+            font-size: 0.55rem;
+            color: var(--muted);
+        }
+        
+        .chart-legend {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-top: 0.5rem;
+            font-family: var(--mono);
+            font-size: 0.6rem;
+        }
+        
+        .legend-color {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            margin-right: 4px;
+        }
+        
+        .legend-color.actual {
+            background: var(--accent);
+        }
+        
+        .year-stats {
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 0.75rem;
+            margin-top: 1rem;
+        }
+        
+        .year-stats-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .year-stats-row:last-child {
+            border-bottom: none;
+        }
+        
+        .year-nav {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .year-nav-btn {
+            font-family: var(--mono);
+            font-size: 0.8rem;
+            font-weight: 700;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+        }
+        
+        .year-nav-btn:hover {
+            background: var(--bg);
+        }
+    `;
+    document.head.appendChild(style);
+}
 
 // Конфігурація ставок зарплати
 const SALARY_RATES = {
