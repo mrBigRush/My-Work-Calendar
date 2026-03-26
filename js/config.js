@@ -49,6 +49,8 @@ actualYearly: 'Faktyczna roczna',
 projectedYearly: 'Prognozowana roczna',
 projected: 'Prognoza',
 actual: 'Faktyczna',
+        addPayment: '+ Dodaj wypłatę',
+addBonus: '+ Dodaj dodatek',
     },
     uk: {
         title: 'Сергій Коломієць',
@@ -91,5 +93,7 @@ actualYearly: 'Фактична річна',
 projectedYearly: 'Прогнозована річна',
 projected: 'Прогноз',
 actual: 'Фактична',
+        addPayment: '+ Додати виплату',
+addBonus: '+ Додати доплату',
     }
 };
