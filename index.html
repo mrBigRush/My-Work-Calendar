@@ -385,8 +385,15 @@ window._changeLang = (l) => {
     set('login-btn', isAdmin ? t.logout : t.login);
     set('hint-box', isAdmin ? t.hintAdmin : t.hint);
     set('report-btn-lbl', t.reportBtn);
-    document.querySelector('.tab-lbl-cal').innerText   = t.tabCal;
-    document.querySelector('.tab-lbl-tacho').innerText = t.tabTacho;
+    
+    // Tabs labels
+    const tabCal = document.querySelector('.tab-lbl-cal');
+    const tabTacho = document.querySelector('.tab-lbl-tacho');
+    const tabSalary = document.querySelector('.tab-lbl-salary');
+    if (tabCal) tabCal.innerText = t.tabCal;
+    if (tabTacho) tabTacho.innerText = t.tabTacho;
+    if (tabSalary) tabSalary.innerText = t.salaryTab;
+    
     set('lbl-sec-type', t.secType); set('lbl-sec-tacho', t.secTacho);
     set('chip-work-lbl', t.work); set('chip-vacation-lbl', t.vacation); set('chip-sick-lbl', t.sick);
     set('d-lbl-start', t.start); set('d-lbl-end', t.end); set('d-lbl-driving', t.driving);
@@ -401,6 +408,19 @@ window._changeLang = (l) => {
     set('lbl-login-title', t.loginTitle); set('lbl-login-desc', t.loginDesc);
     set('lbl-login-btn', t.loginBtn); set('lbl-login-cancel', t.cancel);
     set('login-err', t.loginErr);
+    
+    // Salary tab labels
+    set('stat-work-days-label', t.workDays);
+    set('stat-vacation-days-label', t.vacationDays);
+    set('stat-sick-days-label', t.sickDays);
+    set('stat-other-bonus-label', t.otherBonus);
+    set('stat-projected-label', t.projectedSalary);
+    set('stat-actual-label', t.actualSalary);
+    set('stat-diff-label', t.difference);
+    set('transactions-title', t.transactions);
+    set('bonuses-title', t.bonuses);
+    set('year-actual-label', t.actualYearly);
+    set('year-title', `${t.year} ${new Date().getFullYear()}`);
 
     if (window.calendar) {
         window.calendar.setOption('locale', l);
@@ -408,6 +428,9 @@ window._changeLang = (l) => {
     }
     if (document.getElementById('tab-tacho').style.display !== 'none') {
         renderTachoWeek(getLang);
+    }
+    if (document.getElementById('tab-salary').style.display !== 'none') {
+        initBank(getLang);
     }
 };
 
