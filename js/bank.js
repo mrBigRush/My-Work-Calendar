@@ -2,21 +2,28 @@ import { supabase } from './config.js';
 
 // ======================
 export async function renderBank() {
-    const { data } = await supabase.from('bank').select('*');
-
-    console.log('BANK DATA:', data);
+    const { data, error } = await supabase.from('bank').select('*');
 
     const el = document.getElementById('bank-payments');
     if (!el) return;
 
     el.innerHTML = '';
 
-    (data || []).forEach(p => {
-        el.innerHTML += `
-            <div>
-                ${p.date} — ${p.amount}€ (${p.type || ''})
-            </div>
-        `;
+    // ❗ показуємо помилку прямо на екрані
+    if (error) {
+        el.innerHTML = `<div style="color:red;">ERROR: ${error.message}</div>`;
+        return;
+    }
+
+    // ❗ якщо немає даних
+    if (!data || data.length === 0) {
+        el.innerHTML = `<div>NO DATA</div>`;
+        return;
+    }
+
+    // ❗ показуємо всі поля як є
+    data.forEach(p => {
+        el.innerHTML += `<div>${JSON.stringify(p)}</div>`;
     });
 }
 
