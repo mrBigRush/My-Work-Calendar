@@ -36,6 +36,7 @@
     <div id="tabs-row" style="display:none" class="gap-2 mb-4 bg-white p-1.5 rounded-xl border border-[var(--border)]">
         <button class="tab-btn active flex-1" data-tab="calendar" onclick="window._switchTab('calendar')">📅 <span class="tab-lbl-cal">Kalendarz</span></button>
         <button class="tab-btn flex-1" data-tab="tacho" onclick="window._switchTab('tacho')">🚛 <span class="tab-lbl-tacho">Tachograf</span></button>
+        <button class="tab-btn flex-1" data-tab="salary" onclick="window._switchTab('salary')">💰 <span class="tab-lbl-salary">Zarobki</span></button>
     </div>
 
     <!-- ══════════════════════════════
@@ -108,6 +109,52 @@
         </div>
 
         <div id="days-list" class="space-y-2"></div>
+    </div>
+</div>
+
+    <!-- ══════════════════════════════ 
+    TAB: SALARY 
+    ══════════════════════════════ -->
+    
+<div id="tab-salary" style="display:none">
+    <div class="flex items-center justify-between gap-2 mb-3 bg-white px-4 py-3 rounded-xl border">
+        <button class="week-nav-btn" onclick="window._shiftMonth(-1)">←</button>
+        <h2 id="salary-month-title" class="font-bold text-sm" style="font-family:var(--mono)">Styczeń 2024</h2>
+        <button class="week-nav-btn" onclick="window._shiftMonth(1)">→</button>
+    </div>
+    
+    <div class="salary-grid">
+        <div class="salary-card"><p id="stat-work-label" class="salary-label">Dni pracy</p><p id="stat-work" class="salary-value text-[var(--accent)]">0</p></div>
+        <div class="salary-card"><p id="stat-vacation-label" class="salary-label">Urlop</p><p id="stat-vacation" class="salary-value text-[var(--blue)]">0</p></div>
+        <div class="salary-card"><p id="stat-sick-label" class="salary-label">Choroba</p><p id="stat-sick" class="salary-value text-[var(--red)]">0</p></div>
+        <div class="salary-card"><p id="stat-bonus-label" class="salary-label">Inne dopłaty</p><p id="stat-bonus" class="salary-value text-[var(--orange)]">0 PLN</p></div>
+        <div class="salary-card"><p id="stat-projected-label" class="salary-label">Prognozowana</p><p id="stat-projected" class="salary-value text-[var(--muted)]">0 PLN</p></div>
+        <div class="salary-card"><p id="stat-actual-label" class="salary-label">Faktyczna</p><p id="stat-actual" class="salary-value text-[var(--accent)]">0 PLN</p></div>
+    </div>
+    <p class="text-center text-xs text-[var(--muted)] mb-3"><span id="stat-diff-label">Różnica</span>: <span id="stat-diff">0 PLN</span></p>
+    
+    <div class="flex gap-2 mb-3">
+        <button onclick="window._openPaymentModal(null)" class="flex-1 bg-[var(--text)] text-white px-3 py-2 rounded-xl text-xs font-bold">+ Dodaj wypłatę</button>
+        <button onclick="window._openBonusModal(null)" class="flex-1 bg-[var(--orange)] text-white px-3 py-2 rounded-xl text-xs font-bold">+ Dodaj dodatek</button>
+    </div>
+    
+    <div class="bg-white rounded-2xl border p-3 mb-4">
+        <p id="payments-title" class="salary-label mb-2">Wypłaty</p>
+        <div id="payments-list"></div>
+    </div>
+    
+    <div class="bg-white rounded-2xl border p-3 mb-4">
+        <p id="bonuses-title" class="salary-label mb-2">Dodatki</p>
+        <div id="bonuses-list"></div>
+    </div>
+    
+    <div class="year-stats">
+        <div class="year-nav">
+            <button class="year-btn" onclick="window._changeYear(-1)">←</button>
+            <span id="year-title" class="font-bold text-sm">Rok 2024</span>
+            <button class="year-btn" onclick="window._changeYear(1)">→</button>
+        </div>
+        <div class="year-row"><span id="year-actual-label">Faktyczna roczna</span><span id="year-actual" class="font-mono font-bold">0 PLN</span></div>
     </div>
 </div>
 
@@ -186,6 +233,25 @@
   </div>
 </div>
 
+    <!-- ══════════════════════════════════════════ 
+    MODAL: TRANSACTION 
+    ══════════════════════════════════════════ -->
+<div id="modal-transaction" class="modal-backdrop">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <p id="trans-modal-title" class="modal-title">Dodaj transakcję</p>
+        <div class="mb-3"><label class="field-label">Data</label><input type="date" id="trans-date" class="field-input"></div>
+        <div class="mb-3"><label class="field-label">Kwota (PLN)</label><input type="number" id="trans-amount" class="field-input" step="0.01"></div>
+        <div class="mb-3"><label class="field-label">Notatka</label><input type="text" id="trans-note" class="field-input" placeholder="Opcjonalnie"></div>
+        <input type="hidden" id="trans-type" value="payment">
+        <div class="grid grid-cols-2 gap-2 mb-2">
+            <button onclick="window._saveTransaction()" class="btn-primary">Zapisz</button>
+            <button onclick="window._closeModal('modal-transaction')" class="btn-secondary">Anuluj</button>
+        </div>
+        <button id="trans-delete" onclick="window._deleteTransaction()" class="btn-danger" style="display:none">🗑 Usuń</button>
+    </div>
+</div>
+
 <!-- ══════════════════════════════════════════
      MODAL: Login  (прикріплено до верху)
 ══════════════════════════════════════════ -->
@@ -218,6 +284,7 @@ import { tachoWeekStart, shiftWeek,
          onWeekStartPicked, renderTachoWeek,
          saveTacho, deleteTacho }                 from './js/tacho.js';
 import { closeModal }                             from './js/utils.js';
+import { addSalaryStyles, initSalary, shiftMonth, changeYear, openPaymentModal, openBonusModal, saveTransaction, deleteTransaction } from './js/salary.js';
 
 // ── Language state ────────────────────────────────────
 let lang = 'pl';
@@ -238,6 +305,12 @@ window._autoCalcDay      = () => updateAutoInfo('d', getLang);
 window._autoCalcTacho    = () => updateAutoInfo('t', getLang);
 window._generateReport   = () => generateReport(getLang);
 window._closeModal       = closeModal;
+window._shiftMonth = (d) => shiftMonth(d);
+window._changeYear = (d) => changeYear(d);
+window._openPaymentModal = (id) => openPaymentModal(id, getLang);
+window._openBonusModal = (id) => openBonusModal(id, getLang);
+window._saveTransaction = () => saveTransaction(getLang);
+window._deleteTransaction = () => deleteTransaction(getLang);
 
 // ── Tab switching ─────────────────────────────────────
 window._switchTab = (tab) => {
@@ -248,6 +321,7 @@ window._switchTab = (tab) => {
     document.getElementById('report-btn').style.display   = tab === 'calendar' ? '' : 'none';
     if (tab === 'tacho')    renderTachoWeek(getLang);
     if (tab === 'calendar' && window.calendar) setTimeout(() => window.calendar.updateSize(), 50);
+    if (tab === 'salary') initSalary(getLang);
 };
 
 // ── Language ──────────────────────────────────────────
@@ -277,6 +351,17 @@ window._changeLang = (l) => {
     set('lbl-login-title', t.loginTitle); set('lbl-login-desc', t.loginDesc);
     set('lbl-login-btn', t.loginBtn); set('lbl-login-cancel', t.cancel);
     set('login-err', t.loginErr);
+    // Salary tab labels
+set('stat-work-label', t.workDays);
+set('stat-vacation-label', t.vacationDays);
+set('stat-sick-label', t.sickDays);
+set('stat-bonus-label', t.otherBonus);
+set('stat-projected-label', t.projectedSalary);
+set('stat-actual-label', t.actualSalary);
+set('stat-diff-label', t.difference);
+set('payments-title', t.transactions);
+set('bonuses-title', t.bonuses);
+set('year-actual-label', t.actualYearly);
 
     if (window.calendar) {
         window.calendar.setOption('locale', l);
@@ -298,6 +383,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initAuth(getLang);
     initCalendar(getLang);
     window._changeLang(lang);
+    addSalaryStyles();
 });
 </script>
 </body>
