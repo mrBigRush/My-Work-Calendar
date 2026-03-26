@@ -281,6 +281,9 @@ window._autoCalcDay      = () => updateAutoInfo('d', getLang);
 window._autoCalcTacho    = () => updateAutoInfo('t', getLang);
 window._generateReport   = () => generateReport(getLang);
 window._closeModal       = closeModal;
+window.openModal = openModal;
+window.closeModal = closeBankModal;
+window.addPayment = addPayment;
 
 // ── Tab switching ─────────────────────────────────────
 window._switchTab = (tab) => {
