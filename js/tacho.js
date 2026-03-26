@@ -14,10 +14,12 @@ let tachoWeekManuallySet = false;
 
 // ── Helpers ───────────────────────────────────────────
 function parseDriving(val) {
-    if (!val) return 0;
+    if (!val && val !== 0) return 0;
+    if (typeof val === 'number') return val;
     const str = String(val);
     if (str.includes(':')) return timeToDecimal(str);
-    return parseFloat(str) || 0;
+    const num = parseFloat(str);
+    return isNaN(num) ? 0 : num;
 }
 
 function decimalToHHMM(val) {
@@ -91,11 +93,22 @@ export async function renderTachoWeek(getLang) {
     const wd = all.filter(r => weekDates.includes(r.date));
 
     // ── Weekly stats ──
-    const totalDr = wd.reduce((s, r) => s + parseDriving(r.driving_hours), 0);
-    const e10     = wd.filter(r => r.used_extended_10).length;
-    const e15     = wd.filter(r => r.used_extended_15).length;
-    const sr      = wd.filter(r => r.reduced_rest_9h).length;
-    const totalDrStr = decimalToHHMM(totalDr);
+    // tacho.js - замінити блок з weekly stats
+
+// ── Weekly stats ──
+const totalDr = wd.reduce((s, r) => {
+    const drVal = r.driving_hours;
+    if (drVal === undefined || drVal === null) return s;
+    if (typeof drVal === 'number') return s + drVal;
+    if (typeof drVal === 'string' && drVal.includes(':')) return s + timeToDecimal(drVal);
+    const num = parseFloat(drVal);
+    return s + (isNaN(num) ? 0 : num);
+}, 0);
+
+const e10 = wd.filter(r => r.used_extended_10).length;
+const e15 = wd.filter(r => r.used_extended_15).length;
+const sr = wd.filter(r => r.reduced_rest_9h).length;
+const totalDrStr = decimalToHHMM(totalDr);
 
     // Last rest before week start: find the day just before week
     const dayBeforeWeek = all.find(r => r.date === addDays(ws, -1));
