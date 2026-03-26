@@ -14,32 +14,16 @@ let tachoWeekManuallySet = false;
 
 // ── Helpers ───────────────────────────────────────────
 function parseDriving(val) {
-    if (!val && val !== 0) return 0;
-    
-    // Якщо це вже число
-    if (typeof val === 'number') return val;
-    
-    const str = String(val).trim();
-    if (!str) return 0;
-    
-    // Якщо формат "HH:MM" або "H:MM"
-    if (str.includes(':')) {
-        const parts = str.split(':');
-        const hours = parseInt(parts[0], 10) || 0;
-        const minutes = parseInt(parts[1], 10) || 0;
-        return hours + (minutes / 60);
-    }
-    
-    // Якщо просто число як рядок
-    const num = parseFloat(str);
-    return isNaN(num) ? 0 : num;
+    if (!val) return 0;
+    const str = String(val);
+    if (str.includes(':')) return timeToDecimal(str);
+    return parseFloat(str) || 0;
 }
 
 function decimalToHHMM(val) {
-    if (!val && val !== 0) return '0:00';
-    const hours = Math.floor(val);
-    const minutes = Math.round((val - hours) * 60);
-    return `${hours}:${String(minutes).padStart(2, '0')}`;
+    const h = Math.floor(val);
+    const m = Math.round((val - h) * 60);
+    return `${h}:${String(m).padStart(2,'0')}`;
 }
 
 // ── Week navigation ───────────────────────────────────
@@ -107,38 +91,11 @@ export async function renderTachoWeek(getLang) {
     const wd = all.filter(r => weekDates.includes(r.date));
 
     // ── Weekly stats ──
-    // tacho.js - замінити блок з weekly stats
-
-// ── Weekly stats ──
-const totalDr = wd.reduce((s, r) => {
-    // Перевіряємо всі можливі варіанти зберігання driving_hours
-    let drValue = 0;
-    
-    if (r.driving_hours !== undefined && r.driving_hours !== null) {
-        // Якщо це рядок з двокрапкою (формат "HH:MM")
-        if (typeof r.driving_hours === 'string' && r.driving_hours.includes(':')) {
-            const [h, m] = r.driving_hours.split(':').map(Number);
-            drValue = (h || 0) + ((m || 0) / 60);
-        }
-        // Якщо це число
-        else if (typeof r.driving_hours === 'number') {
-            drValue = r.driving_hours;
-        }
-        // Якщо це рядок з числом
-        else if (typeof r.driving_hours === 'string') {
-            drValue = parseFloat(r.driving_hours) || 0;
-        }
-    }
-    
-    console.log(`Day ${r.date}: driving_hours = ${r.driving_hours}, parsed = ${drValue}`); // Для дебагу
-    
-    return s + drValue;
-}, 0);
-
-const e10 = wd.filter(r => r.used_extended_10).length;
-const e15 = wd.filter(r => r.used_extended_15).length;
-const sr = wd.filter(r => r.reduced_rest_9h).length;
-const totalDrStr = decimalToHHMM(totalDr);
+    const totalDr = wd.reduce((s, r) => s + parseDriving(r.driving_hours), 0);
+    const e10     = wd.filter(r => r.used_extended_10).length;
+    const e15     = wd.filter(r => r.used_extended_15).length;
+    const sr      = wd.filter(r => r.reduced_rest_9h).length;
+    const totalDrStr = decimalToHHMM(totalDr);
 
     // Last rest before week start: find the day just before week
     const dayBeforeWeek = all.find(r => r.date === addDays(ws, -1));
@@ -288,22 +245,11 @@ export async function saveTacho(getLang) {
     const { ext10, ext15, reduced_rest_9h, restHours } =
         calcDayAuto(drTime, s, e, prevEnd);
 
-    // Конвертуємо driving_hours у число
-    let drDecimal = 0;
-    if (drTime && drTime.includes(':')) {
-        const [h, m] = drTime.split(':').map(Number);
-        drDecimal = (h || 0) + ((m || 0) / 60);
-    } else if (drTime) {
-        drDecimal = parseFloat(drTime) || 0;
-    }
-
     await supabase.from('driving_days').upsert({
         date: editingTachoDate,
-        start_time: s, 
-        end_time: e,
-        driving_hours: drDecimal, // Зберігаємо як число
-        used_extended_10: ext10, 
-        used_extended_15: ext15,
+        start_time: s, end_time: e,
+        driving_hours: timeToDecimal(drTime),
+        used_extended_10: ext10, used_extended_15: ext15,
         reduced_rest_9h: reduced_rest_9h,
         rest_hours: restHours !== null ? parseFloat(restHours.toFixed(2)) : null,
         short_breaks_count: 0,
@@ -313,6 +259,7 @@ export async function saveTacho(getLang) {
     showToast(i18n[lang].save + ' ✓');
     renderTachoWeek(getLang);
 }
+
 export async function deleteTacho(getLang) {
     await supabase.from('driving_days').delete().eq('date', editingTachoDate);
     closeModal('modal-tacho');
