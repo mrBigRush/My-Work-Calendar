@@ -15,17 +15,31 @@ let tachoWeekManuallySet = false;
 // ── Helpers ───────────────────────────────────────────
 function parseDriving(val) {
     if (!val && val !== 0) return 0;
+    
+    // Якщо це вже число
     if (typeof val === 'number') return val;
-    const str = String(val);
-    if (str.includes(':')) return timeToDecimal(str);
+    
+    const str = String(val).trim();
+    if (!str) return 0;
+    
+    // Якщо формат "HH:MM" або "H:MM"
+    if (str.includes(':')) {
+        const parts = str.split(':');
+        const hours = parseInt(parts[0], 10) || 0;
+        const minutes = parseInt(parts[1], 10) || 0;
+        return hours + (minutes / 60);
+    }
+    
+    // Якщо просто число як рядок
     const num = parseFloat(str);
     return isNaN(num) ? 0 : num;
 }
 
 function decimalToHHMM(val) {
-    const h = Math.floor(val);
-    const m = Math.round((val - h) * 60);
-    return `${h}:${String(m).padStart(2,'0')}`;
+    if (!val && val !== 0) return '0:00';
+    const hours = Math.floor(val);
+    const minutes = Math.round((val - hours) * 60);
+    return `${hours}:${String(minutes).padStart(2, '0')}`;
 }
 
 // ── Week navigation ───────────────────────────────────
@@ -97,12 +111,28 @@ export async function renderTachoWeek(getLang) {
 
 // ── Weekly stats ──
 const totalDr = wd.reduce((s, r) => {
-    const drVal = r.driving_hours;
-    if (drVal === undefined || drVal === null) return s;
-    if (typeof drVal === 'number') return s + drVal;
-    if (typeof drVal === 'string' && drVal.includes(':')) return s + timeToDecimal(drVal);
-    const num = parseFloat(drVal);
-    return s + (isNaN(num) ? 0 : num);
+    // Перевіряємо всі можливі варіанти зберігання driving_hours
+    let drValue = 0;
+    
+    if (r.driving_hours !== undefined && r.driving_hours !== null) {
+        // Якщо це рядок з двокрапкою (формат "HH:MM")
+        if (typeof r.driving_hours === 'string' && r.driving_hours.includes(':')) {
+            const [h, m] = r.driving_hours.split(':').map(Number);
+            drValue = (h || 0) + ((m || 0) / 60);
+        }
+        // Якщо це число
+        else if (typeof r.driving_hours === 'number') {
+            drValue = r.driving_hours;
+        }
+        // Якщо це рядок з числом
+        else if (typeof r.driving_hours === 'string') {
+            drValue = parseFloat(r.driving_hours) || 0;
+        }
+    }
+    
+    console.log(`Day ${r.date}: driving_hours = ${r.driving_hours}, parsed = ${drValue}`); // Для дебагу
+    
+    return s + drValue;
 }, 0);
 
 const e10 = wd.filter(r => r.used_extended_10).length;
