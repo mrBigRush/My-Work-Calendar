@@ -288,11 +288,22 @@ export async function saveTacho(getLang) {
     const { ext10, ext15, reduced_rest_9h, restHours } =
         calcDayAuto(drTime, s, e, prevEnd);
 
+    // Конвертуємо driving_hours у число
+    let drDecimal = 0;
+    if (drTime && drTime.includes(':')) {
+        const [h, m] = drTime.split(':').map(Number);
+        drDecimal = (h || 0) + ((m || 0) / 60);
+    } else if (drTime) {
+        drDecimal = parseFloat(drTime) || 0;
+    }
+
     await supabase.from('driving_days').upsert({
         date: editingTachoDate,
-        start_time: s, end_time: e,
-        driving_hours: timeToDecimal(drTime),
-        used_extended_10: ext10, used_extended_15: ext15,
+        start_time: s, 
+        end_time: e,
+        driving_hours: drDecimal, // Зберігаємо як число
+        used_extended_10: ext10, 
+        used_extended_15: ext15,
         reduced_rest_9h: reduced_rest_9h,
         rest_hours: restHours !== null ? parseFloat(restHours.toFixed(2)) : null,
         short_breaks_count: 0,
@@ -302,7 +313,6 @@ export async function saveTacho(getLang) {
     showToast(i18n[lang].save + ' ✓');
     renderTachoWeek(getLang);
 }
-
 export async function deleteTacho(getLang) {
     await supabase.from('driving_days').delete().eq('date', editingTachoDate);
     closeModal('modal-tacho');
