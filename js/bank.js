@@ -1,4 +1,3 @@
-// js/bank.js
 import { supabase } from './config.js';
 import { i18n } from './config.js';
 import { isAdmin } from './auth.js';
@@ -11,14 +10,12 @@ let currentMonth = new Date();
 let editingSalaryRecord = null;
 let stylesAdded = false;
 
-// Конфігурація ставок зарплати
 const SALARY_RATES = {
     workDay: 350,
     vacation: 150,
     sick: 120
 };
 
-// ── Додавання стилів ─────────────────────────────────────
 export function addSalaryStyles() {
     if (stylesAdded) return;
     stylesAdded = true;
@@ -185,100 +182,101 @@ export function addSalaryStyles() {
             font-family: var(--mono);
             font-size: 0.75rem;
         }
+        .btn-salary {
+            font-family: var(--mono);
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s;
+            text-align: center;
+        }
+        .btn-salary-primary {
+            background: var(--text);
+            color: white;
+            border: none;
+        }
+        .btn-salary-primary:hover {
+            opacity: 0.85;
+        }
+        .btn-salary-secondary {
+            background: var(--orange);
+            color: white;
+            border: none;
+        }
+        .btn-salary-secondary:hover {
+            opacity: 0.85;
+        }
     `;
     document.head.appendChild(style);
 }
 
-// ── Перевірка підключення до Supabase ────────────────────
 async function checkSupabaseConnection() {
     try {
-        const { data, error } = await supabase
+        const { error } = await supabase
             .from('work_days')
             .select('count', { count: 'exact', head: true })
             .limit(1);
-        
-        if (error) {
-            console.error('Supabase error:', error);
-            return false;
-        }
+        if (error) return false;
         return true;
     } catch (e) {
-        console.error('Network error:', e);
         return false;
     }
 }
 
-// ── Безпечний запит з обробкою помилок ───────────────────
-async function safeQuery(queryFn, errorMsg) {
-    try {
-        const result = await queryFn;
-        if (result.error) {
-            console.error('Query error:', result.error);
-            return { data: [], error: result.error };
-        }
-        return { data: result.data || [], error: null };
-    } catch (e) {
-        console.error('Network error:', e);
-        return { data: [], error: e };
-    }
-}
-
-// ── Отримання робочих днів за місяць ─────────────────────
 async function getWorkDaysForMonth(year, month) {
     const startDate = formatDate(new Date(year, month, 1));
     const endDate = formatDate(new Date(year, month + 1, 0));
-    
-    const result = await safeQuery(
-        supabase
+    try {
+        const { data, error } = await supabase
             .from('work_days')
             .select('*')
             .gte('date', startDate)
-            .lte('date', endDate),
-        'Помилка завантаження робочих днів'
-    );
-    
-    return result.data || [];
+            .lte('date', endDate);
+        if (error) return [];
+        return data || [];
+    } catch (e) {
+        return [];
+    }
 }
 
-// ── Отримання виплат за місяць ───────────────────────────
 async function getPaymentsForMonth(year, month) {
     const startDate = formatDate(new Date(year, month, 1));
     const endDate = formatDate(new Date(year, month + 1, 0));
-    
-    const result = await safeQuery(
-        supabase
+    try {
+        const { data, error } = await supabase
             .from('bank')
             .select('*')
             .eq('type', 'salary_payment')
             .gte('date', startDate)
             .lte('date', endDate)
-            .order('date', { ascending: true }),
-        'Помилка завантаження виплат'
-    );
-    
-    return result.data || [];
+            .order('date', { ascending: true });
+        if (error) return [];
+        return data || [];
+    } catch (e) {
+        return [];
+    }
 }
 
-// ── Отримання доплат за місяць ───────────────────────────
 async function getBonusesForMonth(year, month) {
     const startDate = formatDate(new Date(year, month, 1));
     const endDate = formatDate(new Date(year, month + 1, 0));
-    
-    const result = await safeQuery(
-        supabase
+    try {
+        const { data, error } = await supabase
             .from('bank')
             .select('*')
             .eq('type', 'other_bonus')
             .gte('date', startDate)
             .lte('date', endDate)
-            .order('date', { ascending: true }),
-        'Помилка завантаження доплат'
-    );
-    
-    return result.data || [];
+            .order('date', { ascending: true });
+        if (error) return [];
+        return data || [];
+    } catch (e) {
+        return [];
+    }
 }
 
-// ── Розрахунок прогнозованої зарплати ────────────────────
 function calculateProjectedSalary(workDays, monthBonuses) {
     let total = 0;
     let workDaysCount = 0;
@@ -314,70 +312,50 @@ function calculateProjectedSalary(workDays, monthBonuses) {
     };
 }
 
-// ── Розрахунок річної статистики ─────────────────────────
 async function calculateYearStats(year) {
     const startDate = formatDate(new Date(year, 0, 1));
     const endDate = formatDate(new Date(year, 11, 31));
-    
-    const paymentsResult = await safeQuery(
-        supabase
+    try {
+        const { data: payments } = await supabase
             .from('bank')
             .select('*')
             .eq('type', 'salary_payment')
             .gte('date', startDate)
-            .lte('date', endDate),
-        'Помилка завантаження річних виплат'
-    );
-    
-    const bonusesResult = await safeQuery(
-        supabase
+            .lte('date', endDate);
+        
+        const { data: bonuses } = await supabase
             .from('bank')
             .select('*')
             .eq('type', 'other_bonus')
             .gte('date', startDate)
-            .lte('date', endDate),
-        'Помилка завантаження річних доплат'
-    );
-    
-    const payments = paymentsResult.data || [];
-    const bonuses = bonusesResult.data || [];
-    
-    const totalActual = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0) +
-                        bonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
-    
-    const monthlyBreakdown = [];
-    for (let month = 0; month < 12; month++) {
-        const monthStart = formatDate(new Date(year, month, 1));
-        const monthEnd = formatDate(new Date(year, month + 1, 0));
+            .lte('date', endDate);
         
-        const monthPayments = payments.filter(p => p.date >= monthStart && p.date <= monthEnd);
-        const monthBonuses = bonuses.filter(b => b.date >= monthStart && b.date <= monthEnd);
+        const totalActual = (payments || []).reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0) +
+                            (bonuses || []).reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
         
-        const monthActual = monthPayments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0) +
-                           monthBonuses.reduce((s, b) => s + (parseFloat(b.amount) || 0), 0);
-        
-        monthlyBreakdown.push({
-            month,
-            actual: Math.round(monthActual * 100) / 100
-        });
+        const monthlyBreakdown = [];
+        for (let month = 0; month < 12; month++) {
+            const monthStart = formatDate(new Date(year, month, 1));
+            const monthEnd = formatDate(new Date(year, month + 1, 0));
+            const monthPayments = (payments || []).filter(p => p.date >= monthStart && p.date <= monthEnd);
+            const monthBonuses = (bonuses || []).filter(b => b.date >= monthStart && b.date <= monthEnd);
+            const monthActual = monthPayments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0) +
+                               monthBonuses.reduce((s, b) => s + (parseFloat(b.amount) || 0), 0);
+            monthlyBreakdown.push({ month, actual: Math.round(monthActual * 100) / 100 });
+        }
+        return { actual: Math.round(totalActual * 100) / 100, monthlyBreakdown };
+    } catch (e) {
+        return { actual: 0, monthlyBreakdown: Array(12).fill({ actual: 0 }) };
     }
-    
-    return {
-        actual: Math.round(totalActual * 100) / 100,
-        monthlyBreakdown
-    };
 }
 
-// ── Рендер списку виплат ─────────────────────────────────
 function renderPaymentsList(payments, lang) {
     const container = document.getElementById('payments-list');
     if (!container) return;
-    
     if (!payments || payments.length === 0) {
         container.innerHTML = `<p class="text-center text-[var(--muted)] text-sm py-4">${lang === 'pl' ? 'Brak wypłat' : 'Немає виплат'}</p>`;
         return;
     }
-    
     container.innerHTML = payments.map(payment => `
         <div class="transaction-item" data-id="${payment.id}">
             <div class="flex justify-between items-center">
@@ -390,7 +368,6 @@ function renderPaymentsList(payments, lang) {
             </div>
         </div>
     `).join('');
-    
     if (isAdmin) {
         container.querySelectorAll('.transaction-item').forEach(el => {
             el.addEventListener('click', () => openPaymentModal(el.dataset.id, () => lang));
@@ -398,16 +375,13 @@ function renderPaymentsList(payments, lang) {
     }
 }
 
-// ── Рендер списку доплат ─────────────────────────────────
 function renderBonusesList(bonuses, lang) {
     const container = document.getElementById('bonuses-list');
     if (!container) return;
-    
     if (!bonuses || bonuses.length === 0) {
         container.innerHTML = `<p class="text-center text-[var(--muted)] text-sm py-4">${lang === 'pl' ? 'Brak dodatków' : 'Немає доплат'}</p>`;
         return;
     }
-    
     container.innerHTML = bonuses.map(bonus => `
         <div class="transaction-item" data-id="${bonus.id}">
             <div class="flex justify-between items-center">
@@ -420,7 +394,6 @@ function renderBonusesList(bonuses, lang) {
             </div>
         </div>
     `).join('');
-    
     if (isAdmin) {
         container.querySelectorAll('.transaction-item').forEach(el => {
             el.addEventListener('click', () => openBonusModal(el.dataset.id, () => lang));
@@ -428,17 +401,13 @@ function renderBonusesList(bonuses, lang) {
     }
 }
 
-// ── Рендер графіку ───────────────────────────────────────
 function renderMonthlyChart(monthlyBreakdown, lang) {
     const container = document.getElementById('monthly-chart');
     if (!container) return;
-    
     const monthLabels = lang === 'pl' 
         ? ['Sty', 'Lut', 'Mar', 'Kwi', 'Maj', 'Cze', 'Lip', 'Sie', 'Wrz', 'Paź', 'Lis', 'Gru']
         : ['Січ', 'Лют', 'Бер', 'Кві', 'Тра', 'Чер', 'Лип', 'Сер', 'Вер', 'Жов', 'Лис', 'Гру'];
-    
     const maxValue = Math.max(...monthlyBreakdown.map(m => m.actual), 1);
-    
     container.innerHTML = `
         <div class="chart-container">
             ${monthlyBreakdown.map((m, i) => `
@@ -456,18 +425,25 @@ function renderMonthlyChart(monthlyBreakdown, lang) {
     `;
 }
 
-// ── Головний рендер ──────────────────────────────────────
+function updateButtonsText(lang) {
+    const t = i18n[lang];
+    const addPaymentBtn = document.querySelector('#tab-salary .flex.gap-2 button:first-child');
+    const addBonusBtn = document.querySelector('#tab-salary .flex.gap-2 button:last-child');
+    if (addPaymentBtn) addPaymentBtn.innerHTML = `+ ${t.addPayment || (lang === 'pl' ? 'Dodaj wypłatę' : 'Додати виплату')}`;
+    if (addBonusBtn) addBonusBtn.innerHTML = `+ ${t.addBonus || (lang === 'pl' ? 'Dodaj dodatek' : 'Додати доплату')}`;
+}
+
 export async function renderSalaryMonth(getLang) {
     const lang = getLang();
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
-    
     const monthNames = lang === 'pl' 
         ? ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień']
         : ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'];
     
     document.getElementById('salary-month-title').innerText = `${monthNames[month]} ${year}`;
-    document.getElementById('year-title').innerText = `${lang === 'pl' ? 'Rok' : 'Рік'} ${year}`;
+    document.getElementById('year-title').innerHTML = `${lang === 'pl' ? 'Rok' : 'Рік'} ${year}`;
+    updateButtonsText(lang);
     
     const isConnected = await checkSupabaseConnection();
     if (!isConnected) {
@@ -481,7 +457,6 @@ export async function renderSalaryMonth(getLang) {
     const workDays = await getWorkDaysForMonth(year, month);
     const payments = await getPaymentsForMonth(year, month);
     const bonuses = await getBonusesForMonth(year, month);
-    
     const projected = calculateProjectedSalary(workDays, bonuses);
     const actualTotal = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
     
@@ -505,17 +480,14 @@ export async function renderSalaryMonth(getLang) {
     renderMonthlyChart(yearStats.monthlyBreakdown, lang);
 }
 
-// ── Ініціалізація модуля ─────────────────────────────────
 export async function initBank(getLang) {
     const lang = getLang();
     updateSalaryLocale(lang);
     await renderSalaryMonth(getLang);
 }
 
-// ── Оновлення текстів при зміні мови ─────────────────────
 function updateSalaryLocale(lang) {
     const t = i18n[lang];
-    
     const labels = {
         'stat-work-days-label': t.workDays,
         'stat-vacation-days-label': t.vacationDays,
@@ -528,74 +500,73 @@ function updateSalaryLocale(lang) {
         'bonuses-title': t.bonuses,
         'year-actual-label': t.actualYearly
     };
-    
     for (const [id, text] of Object.entries(labels)) {
         const el = document.getElementById(id);
         if (el) el.innerText = text;
     }
+    updateButtonsText(lang);
 }
 
-// ── Модальне вікно для виплати ───────────────────────────
 export async function openPaymentModal(existingId = null, getLang) {
     const lang = getLang();
     editingSalaryRecord = existingId;
-    
     let record = null;
     if (existingId) {
-        const { data } = await supabase
-            .from('bank')
-            .select('*')
-            .eq('id', existingId)
-            .maybeSingle();
+        const { data } = await supabase.from('bank').select('*').eq('id', existingId).maybeSingle();
         record = data;
     }
-    
-    document.getElementById('transaction-modal-title').innerText = 
-        existingId 
-            ? (lang === 'pl' ? 'Edytuj wypłatę' : 'Редагувати виплату')
-            : (lang === 'pl' ? 'Dodaj wypłatę' : 'Додати виплату');
-    
+    document.getElementById('transaction-modal-title').innerText = existingId 
+        ? (lang === 'pl' ? 'Edytuj wypłatę' : 'Редагувати виплату')
+        : (lang === 'pl' ? 'Dodaj wypłatę' : 'Додати виплату');
     document.getElementById('trans-date').value = record?.date || formatDate(new Date());
     document.getElementById('trans-amount').value = record?.amount || '';
     document.getElementById('trans-note').value = record?.note || '';
     document.getElementById('trans-type').value = 'salary_payment';
     document.getElementById('trans-type').disabled = true;
-    
     document.getElementById('trans-delete-btn').style.display = existingId ? '' : 'none';
     openModal('modal-transaction');
 }
 
-// ── Модальне вікно для доплати ───────────────────────────
 export async function openBonusModal(existingId = null, getLang) {
     const lang = getLang();
     editingSalaryRecord = existingId;
-    
     let record = null;
     if (existingId) {
-        const { data } = await supabase
-            .from('bank')
-            .select('*')
-            .eq('id', existingId)
-            .maybeSingle();
+        const { data } = await supabase.from('bank').select('*').eq('id', existingId).maybeSingle();
         record = data;
     }
-    
-    document.getElementById('transaction-modal-title').innerText = 
-        existingId 
-            ? (lang === 'pl' ? 'Edytuj dodatek' : 'Редагувати доплату')
-            : (lang === 'pl' ? 'Dodaj dodatek' : 'Додати доплату');
-    
+    document.getElementById('transaction-modal-title').innerText = existingId 
+        ? (lang === 'pl' ? 'Edytuj dodatek' : 'Редагувати доплату')
+        : (lang === 'pl' ? 'Dodaj dodatek' : 'Додати доплату');
     document.getElementById('trans-date').value = record?.date || formatDate(new Date());
     document.getElementById('trans-amount').value = record?.amount || '';
     document.getElementById('trans-note').value = record?.note || '';
     document.getElementById('trans-type').value = 'other_bonus';
     document.getElementById('trans-type').disabled = true;
-    
     document.getElementById('trans-delete-btn').style.display = existingId ? '' : 'none';
     openModal('modal-transaction');
 }
 
-// ── Збереження транзакції ────────────────────────────────
+export async function openBonusModal(existingId = null, getLang) {
+    const lang = getLang();
+    editingSalaryRecord = existingId;
+    let record = null;
+    if (existingId) {
+        const { data } = await supabase.from('bank').select('*').eq('id', existingId).maybeSingle();
+        record = data;
+    }
+    document.getElementById('transaction-modal-title').innerText = existingId 
+        ? (lang === 'pl' ? 'Edytuj dodatek' : 'Редагувати доплату')
+        : (lang === 'pl' ? 'Dodaj dodatek' : 'Додати доплату');
+    document.getElementById('trans-date').value = record?.date || formatDate(new Date());
+    document.getElementById('trans-amount').value = record?.amount || '';
+    document.getElementById('trans-note').value = record?.note || '';
+    document.getElementById('trans-type').value = 'other_bonus';
+    document.getElementById('trans-type').disabled = true;
+    document.getElementById('trans-delete-btn').style.display = existingId ? '' : 'none';
+    openModal('modal-transaction');
+}
+
 export async function saveTransaction(getLang) {
     const lang = getLang();
     const date = document.getElementById('trans-date').value;
@@ -607,7 +578,6 @@ export async function saveTransaction(getLang) {
         showToast(lang === 'pl' ? 'Wprowadź poprawną kwotę!' : 'Введіть коректну суму!');
         return;
     }
-    
     if (!date) {
         showToast(lang === 'pl' ? 'Wybierz datę!' : 'Виберіть дату!');
         return;
@@ -615,69 +585,37 @@ export async function saveTransaction(getLang) {
     
     try {
         if (editingSalaryRecord) {
-            const { error } = await supabase
-                .from('bank')
-                .update({ date, amount, type, note })
-                .eq('id', editingSalaryRecord);
-            if (error) throw error;
+            await supabase.from('bank').update({ date, amount, type, note }).eq('id', editingSalaryRecord);
         } else {
-            const { error } = await supabase
-                .from('bank')
-                .insert([{ date, amount, type, note }]);
-            if (error) throw error;
+            await supabase.from('bank').insert([{ date, amount, type, note }]);
         }
-        
         closeModal('modal-transaction');
         showToast(i18n[lang].save + ' ✓');
         await renderSalaryMonth(getLang);
     } catch (error) {
-        console.error('Save error:', error);
         showToast(lang === 'pl' ? 'Błąd zapisu!' : 'Помилка збереження!');
     }
 }
 
-// ── Видалення транзакції ─────────────────────────────────
 export async function deleteTransaction(getLang) {
     if (!editingSalaryRecord) return;
-    
     const lang = getLang();
-    
     try {
-        const { error } = await supabase
-            .from('bank')
-            .delete()
-            .eq('id', editingSalaryRecord);
-        
-        if (error) throw error;
-        
+        await supabase.from('bank').delete().eq('id', editingSalaryRecord);
         closeModal('modal-transaction');
         showToast(i18n[lang].delete + ' ✓');
         await renderSalaryMonth(getLang);
     } catch (error) {
-        console.error('Delete error:', error);
         showToast(lang === 'pl' ? 'Błąd usuwania!' : 'Помилка видалення!');
     }
 }
 
-// ── Навігація по місяцях ─────────────────────────────────
 export function shiftMonth(delta) {
     currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + delta, 1);
     renderSalaryMonth(window._getLang);
 }
 
-// ── Зміна року ───────────────────────────────────────────
 export function changeYear(delta) {
     currentMonth = new Date(currentMonth.getFullYear() + delta, currentMonth.getMonth(), 1);
     renderSalaryMonth(window._getLang);
-}
-
-// ── Тест підключення ─────────────────────────────────────
-export async function testConnection() {
-    const isConnected = await checkSupabaseConnection();
-    if (isConnected) {
-        showToast('✅ Połączenie z bazą danych działa!');
-    } else {
-        showToast('❌ Brak połączenia z bazą danych!');
-    }
-    return isConnected;
 }
