@@ -351,10 +351,13 @@ window._autoCalcDay      = () => updateAutoInfo('d', getLang);
 window._autoCalcTacho    = () => updateAutoInfo('t', getLang);
 window._generateReport   = () => generateReport(getLang);
 window._closeModal       = closeModal;
-window._shiftMonth = (d) => shiftMonth(d);
-window._changeYear = (d) => changeYear(d);
-window._openTransactionModal = (date) => openTransactionModal(date, null, getLang);
-window._saveTransaction = () => saveTransaction(getLang);
+window._shiftMonth        = (d) => shiftMonth(d);
+window._changeYear        = (d) => changeYear(d);
+window._openPaymentModal  = (id) => openPaymentModal(id, getLang);
+window._openBonusModal    = (id) => openBonusModal(id, getLang);
+window._editPayment       = (id) => openPaymentModal(id, getLang);
+window._editBonus         = (id) => openBonusModal(id, getLang);
+window._saveTransaction   = () => saveTransaction(getLang);
 window._deleteTransaction = () => deleteTransaction(getLang);
 
 // ── Tab switching ─────────────────────────────────────
