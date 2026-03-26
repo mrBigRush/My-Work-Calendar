@@ -115,51 +115,63 @@
     <!-- ══════════════════════════════
          TAB: BANK
     ══════════════════════════════ -->
-    <div id="tab-salary" style="display:none">
+    <!-- Вкладка Зарплата - замінити повністю -->
+<div id="tab-salary" style="display:none">
     <!-- Навігація по місяцях -->
     <div class="flex items-center justify-between gap-2 mb-3 bg-white px-4 py-3 rounded-xl border border-[var(--border)]">
         <button class="week-nav-btn" onclick="window._shiftMonth(-1)">←</button>
         <h2 id="salary-month-title" class="font-bold text-sm" style="font-family:var(--mono)">Styczeń 2024</h2>
         <button class="week-nav-btn" onclick="window._shiftMonth(1)">→</button>
-        <button id="add-transaction-btn" onclick="window._openTransactionModal(null)" class="bg-[var(--accent)] text-white px-3 py-2 rounded-xl text-xs font-bold" style="font-family:var(--mono)">+ Dodaj</button>
     </div>
     
     <!-- Статистика за місяць -->
     <div class="salary-stats-grid">
         <div class="salary-stat-card">
-            <p class="salary-stat-label">Dni pracy</p>
+            <p id="stat-work-days-label" class="salary-stat-label">Dni pracy</p>
             <p id="stat-work-days" class="salary-stat-value text-[var(--accent)]">0</p>
         </div>
         <div class="salary-stat-card">
-            <p class="salary-stat-label">Urlop</p>
+            <p id="stat-vacation-days-label" class="salary-stat-label">Urlop</p>
             <p id="stat-vacation-days" class="salary-stat-value text-[var(--blue)]">0</p>
         </div>
         <div class="salary-stat-card">
-            <p class="salary-stat-label">Choroba</p>
+            <p id="stat-sick-days-label" class="salary-stat-label">Choroba</p>
             <p id="stat-sick-days" class="salary-stat-value text-[var(--red)]">0</p>
         </div>
         <div class="salary-stat-card">
-            <p class="salary-stat-label">Bonus tacho</p>
-            <p id="stat-tacho-bonus" class="salary-stat-value text-[var(--orange)]">0</p>
+            <p id="stat-other-bonus-label" class="salary-stat-label">Inne dopłaty</p>
+            <p id="stat-other-bonus" class="salary-stat-value text-[var(--orange)]">0 PLN</p>
         </div>
         <div class="salary-stat-card">
-            <p class="salary-stat-label">Prognozowana</p>
+            <p id="stat-projected-label" class="salary-stat-label">Prognozowana</p>
             <p id="stat-projected" class="salary-stat-value text-[var(--muted)]">0 PLN</p>
         </div>
         <div class="salary-stat-card">
-            <p class="salary-stat-label">Faktyczna</p>
+            <p id="stat-actual-label" class="salary-stat-label">Faktyczna</p>
             <p id="stat-actual" class="salary-stat-value text-[var(--accent)]">0 PLN</p>
         </div>
     </div>
-    <p class="text-center text-xs text-[var(--muted)] mb-3" id="stat-diff-label">Różnica: <span id="stat-diff">0 PLN</span></p>
+    <p class="text-center text-xs text-[var(--muted)] mb-3"><span id="stat-diff-label">Różnica</span>: <span id="stat-diff">0 PLN</span></p>
     
-    <!-- Lista transakcji -->
-    <div class="bg-white rounded-2xl border border-[var(--border)] p-3 mb-4">
-        <p class="stat-label text-[var(--muted)] mb-2">Transakcje</p>
-        <div id="transactions-list" class="max-h-64 overflow-y-auto"></div>
+    <!-- Przyciski dodawania -->
+    <div class="flex gap-2 mb-3">
+        <button onclick="window._openPaymentModal(null)" class="flex-1 bg-[var(--text)] text-white px-3 py-2 rounded-xl text-xs font-bold" style="font-family:var(--mono)">+ Dodaj wypłatę</button>
+        <button onclick="window._openBonusModal(null)" class="flex-1 bg-[var(--orange)] text-white px-3 py-2 rounded-xl text-xs font-bold" style="font-family:var(--mono)">+ Dodaj dodatek</button>
     </div>
     
-    <!-- Roczne podsumowanie -->
+    <!-- Lista wypłat -->
+    <div class="bg-white rounded-2xl border border-[var(--border)] p-3 mb-4">
+        <p id="transactions-title" class="stat-label text-[var(--muted)] mb-2">Wypłaty</p>
+        <div id="payments-list" class="max-h-48 overflow-y-auto"></div>
+    </div>
+    
+    <!-- Lista dodatków -->
+    <div class="bg-white rounded-2xl border border-[var(--border)] p-3 mb-4">
+        <p id="bonuses-title" class="stat-label text-[var(--muted)] mb-2">Dodatki</p>
+        <div id="bonuses-list" class="max-h-48 overflow-y-auto"></div>
+    </div>
+    
+    <!-- Roczne podsumowanie (tylko faktyczna) -->
     <div class="year-stats">
         <div class="year-nav">
             <button class="year-nav-btn" onclick="window._changeYear(-1)">←</button>
@@ -167,20 +179,12 @@
             <button class="year-nav-btn" onclick="window._changeYear(1)">→</button>
         </div>
         <div class="year-stats-row">
-            <span class="text-xs font-medium">Prognozowana roczna</span>
-            <span id="year-projected" class="font-mono font-bold">0 PLN</span>
-        </div>
-        <div class="year-stats-row">
-            <span class="text-xs font-medium">Faktyczna roczna</span>
+            <span id="year-actual-label" class="text-xs font-medium">Faktyczna roczna</span>
             <span id="year-actual" class="font-mono font-bold">0 PLN</span>
-        </div>
-        <div class="year-stats-row">
-            <span class="text-xs font-medium">Różnica</span>
-            <span id="year-diff" class="font-mono font-bold">0 PLN</span>
         </div>
         <div id="monthly-chart" class="mt-3"></div>
     </div>
-    </div>
+</div>
 
 <!-- ══════════════════════════════════════════
      MODAL: Unified day (calendar click)
