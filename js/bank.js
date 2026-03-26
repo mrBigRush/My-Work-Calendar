@@ -1,3 +1,4 @@
+// js/bank.js
 import { supabase } from './config.js';
 import { i18n } from './config.js';
 import { isAdmin } from './auth.js';
@@ -10,20 +11,26 @@ let currentMonth = new Date();
 let editingSalaryRecord = null;
 let stylesAdded = false;
 
+// Конфігурація ставок зарплати
+const SALARY_RATES = {
+    workDay: 350,
+    vacation: 150,
+    sick: 120
+};
+
+// ── Додавання стилів ─────────────────────────────────────
 export function addSalaryStyles() {
     if (stylesAdded) return;
     stylesAdded = true;
     
     const style = document.createElement('style');
     style.textContent = `
-        /* Salary Tab Styles */
         .salary-stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 0.75rem;
             margin-bottom: 1rem;
         }
-        
         .salary-stat-card {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -31,7 +38,6 @@ export function addSalaryStyles() {
             padding: 0.75rem;
             text-align: center;
         }
-        
         .salary-stat-label {
             font-family: var(--mono);
             font-size: 0.6rem;
@@ -40,14 +46,12 @@ export function addSalaryStyles() {
             letter-spacing: 0.08em;
             color: var(--muted);
         }
-        
         .salary-stat-value {
             font-family: var(--mono);
             font-size: 1.25rem;
             font-weight: 700;
             line-height: 1.2;
         }
-        
         .transaction-item {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -55,24 +59,18 @@ export function addSalaryStyles() {
             padding: 0.75rem;
             margin-bottom: 0.5rem;
             transition: all 0.15s;
-        }
-        
-        .transaction-item.clickable {
             cursor: pointer;
         }
-        
-        .transaction-item.clickable:hover {
+        .transaction-item:hover {
             border-color: var(--accent);
             background: var(--accent-light);
         }
-        
         .transaction-date {
             font-family: var(--mono);
             font-size: 0.7rem;
             font-weight: 600;
             color: var(--muted);
         }
-        
         .transaction-type {
             font-family: var(--mono);
             font-size: 0.65rem;
@@ -82,28 +80,18 @@ export function addSalaryStyles() {
             display: inline-block;
             margin-top: 0.25rem;
         }
-        
         .transaction-note {
             font-family: var(--mono);
             font-size: 0.6rem;
             color: var(--muted);
             margin-top: 0.25rem;
         }
-        
         .transaction-amount {
             font-family: var(--mono);
             font-size: 0.9rem;
             font-weight: 700;
-        }
-        
-        .transaction-amount.positive {
             color: var(--accent);
         }
-        
-        .transaction-amount.negative {
-            color: var(--red);
-        }
-        
         .chart-container {
             display: flex;
             align-items: flex-end;
@@ -112,7 +100,6 @@ export function addSalaryStyles() {
             gap: 4px;
             padding: 0.5rem 0;
         }
-        
         .chart-bar-group {
             flex: 1;
             display: flex;
@@ -120,7 +107,6 @@ export function addSalaryStyles() {
             align-items: center;
             gap: 6px;
         }
-        
         .chart-bars {
             display: flex;
             gap: 3px;
@@ -129,23 +115,17 @@ export function addSalaryStyles() {
             width: 100%;
             justify-content: center;
         }
-        
         .chart-bar {
             width: 12px;
             border-radius: 4px 4px 0 0;
             transition: height 0.3s ease;
-        }
-        
-        .chart-bar.actual {
             background: var(--accent);
         }
-        
         .chart-label {
             font-family: var(--mono);
             font-size: 0.55rem;
             color: var(--muted);
         }
-        
         .chart-legend {
             display: flex;
             justify-content: center;
@@ -154,37 +134,29 @@ export function addSalaryStyles() {
             font-family: var(--mono);
             font-size: 0.6rem;
         }
-        
         .legend-color {
             display: inline-block;
             width: 12px;
             height: 12px;
             border-radius: 2px;
             margin-right: 4px;
-        }
-        
-        .legend-color.actual {
             background: var(--accent);
         }
-        
         .year-stats {
             background: var(--bg);
             border-radius: 12px;
             padding: 0.75rem;
             margin-top: 1rem;
         }
-        
         .year-stats-row {
             display: flex;
             justify-content: space-between;
             padding: 0.5rem 0;
             border-bottom: 1px solid var(--border);
         }
-        
         .year-stats-row:last-child {
             border-bottom: none;
         }
-        
         .year-nav {
             display: flex;
             align-items: center;
@@ -192,7 +164,6 @@ export function addSalaryStyles() {
             gap: 0.5rem;
             margin-bottom: 0.75rem;
         }
-        
         .year-nav-btn {
             font-family: var(--mono);
             font-size: 0.8rem;
@@ -204,130 +175,115 @@ export function addSalaryStyles() {
             height: 28px;
             cursor: pointer;
         }
-        
         .year-nav-btn:hover {
             background: var(--bg);
+        }
+        .error-state {
+            text-align: center;
+            color: var(--red);
+            padding: 1rem;
+            font-family: var(--mono);
+            font-size: 0.75rem;
         }
     `;
     document.head.appendChild(style);
 }
 
-// Конфігурація ставок зарплати
-const SALARY_RATES = {
-    workDay: 350,    // Ставка за робочий день (PLN)
-    vacation: 150,   // Ставка за день відпустки
-    sick: 120,        // Ставка за день хвороби
-    otherBonus: 0    // Інші доплати - будуть додаватися окремо
-};
-
-// ── Ініціалізація модуля ───────────────────────────────────
-export async function initBank(getLang) {
-    const lang = getLang();
-    updateSalaryLocale(lang);
-    await renderSalaryMonth(getLang);
-}
-
-// ── Оновлення текстів при зміні мови ───────────────────────
-function updateSalaryLocale(lang) {
-    const t = i18n[lang];
-    
-    const elements = {
-        'salary-tab-title': t.salaryTab || 'Zarobki',
-        'salary-month-nav': t.salaryMonthNav || 'Miesiąc',
-        'salary-add-btn': t.salaryAddBtn || '+ Dodaj',
-        'stat-work-days-label': t.workDays || 'Dni pracy',
-        'stat-vacation-days-label': t.vacationDays || 'Urlop',
-        'stat-sick-days-label': t.sickDays || 'Choroba',
-        'stat-other-bonus-label': t.otherBonus || 'Inne dopłaty',
-        'stat-projected-label': t.projectedSalary || 'Prognozowana',
-        'stat-actual-label': t.actualSalary || 'Faktyczna',
-        'stat-diff-label': t.difference || 'Różnica',
-        'transactions-title': t.transactions || 'Transakcje',
-        'year-title': t.year || 'Rok',
-        'year-actual-label': t.actualYearly || 'Faktyczna roczna',
-        'year-projected-label': t.projectedYearly || 'Prognozowana roczna',
-        'chart-legend-projected': t.projected || 'Prognoza',
-        'chart-legend-actual': t.actual || 'Faktyczna'
-    };
-    
-    for (const [id, text] of Object.entries(elements)) {
-        const el = document.getElementById(id);
-        if (el) el.innerText = text;
+// ── Перевірка підключення до Supabase ────────────────────
+async function checkSupabaseConnection() {
+    try {
+        const { data, error } = await supabase
+            .from('work_days')
+            .select('count', { count: 'exact', head: true })
+            .limit(1);
+        
+        if (error) {
+            console.error('Supabase error:', error);
+            return false;
+        }
+        return true;
+    } catch (e) {
+        console.error('Network error:', e);
+        return false;
     }
-    
-    // Оновлюємо місяці в графіку при наступному рендері
 }
 
-// ── Отримання даних про робочі дні за місяць ───────────────
-async function getWorkDaysForMonth(year, month, getLang) {
+// ── Безпечний запит з обробкою помилок ───────────────────
+async function safeQuery(queryFn, errorMsg) {
+    try {
+        const result = await queryFn;
+        if (result.error) {
+            console.error('Query error:', result.error);
+            return { data: [], error: result.error };
+        }
+        return { data: result.data || [], error: null };
+    } catch (e) {
+        console.error('Network error:', e);
+        return { data: [], error: e };
+    }
+}
+
+// ── Отримання робочих днів за місяць ─────────────────────
+async function getWorkDaysForMonth(year, month) {
     const startDate = formatDate(new Date(year, month, 1));
     const endDate = formatDate(new Date(year, month + 1, 0));
     
-    const { data: workDays } = await supabase
-        .from('work_days')
-        .select('*')
-        .gte('date', startDate)
-        .lte('date', endDate);
+    const result = await safeQuery(
+        supabase
+            .from('work_days')
+            .select('*')
+            .gte('date', startDate)
+            .lte('date', endDate),
+        'Помилка завантаження робочих днів'
+    );
     
-    const { data: otherBonuses } = await supabase
-        .from('bank')
-        .select('*')
-        .eq('type', 'other_bonus')
-        .gte('date', startDate)
-        .lte('date', endDate);
-    
-    // Групуємо інші доплати по днях
-    const bonusByDate = {};
-    (otherBonuses || []).forEach(bonus => {
-        if (!bonusByDate[bonus.date]) bonusByDate[bonus.date] = 0;
-        bonusByDate[bonus.date] += parseFloat(bonus.amount) || 0;
-    });
-    
-    return {
-        workDays: workDays || [],
-        bonuses: bonusByDate
-    };
+    return result.data || [];
 }
 
-// ── Отримання всіх транзакцій (виплат) за місяць ───────────
-async function getSalaryPayments(year, month) {
+// ── Отримання виплат за місяць ───────────────────────────
+async function getPaymentsForMonth(year, month) {
     const startDate = formatDate(new Date(year, month, 1));
     const endDate = formatDate(new Date(year, month + 1, 0));
     
-    const { data } = await supabase
-        .from('bank')
-        .select('*')
-        .eq('type', 'salary_payment')
-        .gte('date', startDate)
-        .lte('date', endDate)
-        .order('date', { ascending: true });
+    const result = await safeQuery(
+        supabase
+            .from('bank')
+            .select('*')
+            .eq('type', 'salary_payment')
+            .gte('date', startDate)
+            .lte('date', endDate)
+            .order('date', { ascending: true }),
+        'Помилка завантаження виплат'
+    );
     
-    return data || [];
+    return result.data || [];
 }
 
-// ── Отримання всіх інших доплат ────────────────────────────
-async function getOtherBonuses(year, month) {
+// ── Отримання доплат за місяць ───────────────────────────
+async function getBonusesForMonth(year, month) {
     const startDate = formatDate(new Date(year, month, 1));
     const endDate = formatDate(new Date(year, month + 1, 0));
     
-    const { data } = await supabase
-        .from('bank')
-        .select('*')
-        .eq('type', 'other_bonus')
-        .gte('date', startDate)
-        .lte('date', endDate)
-        .order('date', { ascending: true });
+    const result = await safeQuery(
+        supabase
+            .from('bank')
+            .select('*')
+            .eq('type', 'other_bonus')
+            .gte('date', startDate)
+            .lte('date', endDate)
+            .order('date', { ascending: true }),
+        'Помилка завантаження доплат'
+    );
     
-    return data || [];
+    return result.data || [];
 }
 
-// ── Розрахунок прогнозованої зарплати за місяць ────────────
-function calculateProjectedSalary(workDays, bonuses) {
+// ── Розрахунок прогнозованої зарплати ────────────────────
+function calculateProjectedSalary(workDays, monthBonuses) {
     let total = 0;
     let workDaysCount = 0;
     let vacationDays = 0;
     let sickDays = 0;
-    let otherBonusesTotal = 0;
     
     workDays.forEach(day => {
         switch(day.type) {
@@ -346,71 +302,56 @@ function calculateProjectedSalary(workDays, bonuses) {
         }
     });
     
-    // Додаємо інші доплати
-    for (const date in bonuses) {
-        otherBonusesTotal += bonuses[date];
-        total += bonuses[date];
-    }
+    const bonusesTotal = monthBonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
+    total += bonusesTotal;
     
     return {
         total: Math.round(total * 100) / 100,
         workDaysCount,
         vacationDays,
         sickDays,
-        otherBonusesTotal: Math.round(otherBonusesTotal * 100) / 100
+        bonusesTotal: Math.round(bonusesTotal * 100) / 100
     };
 }
 
-// ── Розрахунок фактичних виплат за місяць ──────────────────
-function calculateActualPayments(payments) {
-    let total = 0;
-    
-    payments.forEach(payment => {
-        total += parseFloat(payment.amount) || 0;
-    });
-    
-    return {
-        total: Math.round(total * 100) / 100,
-        count: payments.length
-    };
-}
-
-// ── Розрахунок річної статистики (тільки фактична) ─────────
-async function calculateYearStats(year, getLang) {
+// ── Розрахунок річної статистики ─────────────────────────
+async function calculateYearStats(year) {
     const startDate = formatDate(new Date(year, 0, 1));
     const endDate = formatDate(new Date(year, 11, 31));
     
-    // Отримуємо всі виплати за рік
-    const { data: payments } = await supabase
-        .from('bank')
-        .select('*')
-        .eq('type', 'salary_payment')
-        .gte('date', startDate)
-        .lte('date', endDate);
+    const paymentsResult = await safeQuery(
+        supabase
+            .from('bank')
+            .select('*')
+            .eq('type', 'salary_payment')
+            .gte('date', startDate)
+            .lte('date', endDate),
+        'Помилка завантаження річних виплат'
+    );
     
-    const { data: bonuses } = await supabase
-        .from('bank')
-        .select('*')
-        .eq('type', 'other_bonus')
-        .gte('date', startDate)
-        .lte('date', endDate);
+    const bonusesResult = await safeQuery(
+        supabase
+            .from('bank')
+            .select('*')
+            .eq('type', 'other_bonus')
+            .gte('date', startDate)
+            .lte('date', endDate),
+        'Помилка завантаження річних доплат'
+    );
     
-    const totalPayments = (payments || []).reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
-    const totalBonuses = (bonuses || []).reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
-    const totalActual = totalPayments + totalBonuses;
+    const payments = paymentsResult.data || [];
+    const bonuses = bonusesResult.data || [];
     
-    // Місячна розбивка для графіка
+    const totalActual = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0) +
+                        bonuses.reduce((sum, b) => sum + (parseFloat(b.amount) || 0), 0);
+    
     const monthlyBreakdown = [];
     for (let month = 0; month < 12; month++) {
         const monthStart = formatDate(new Date(year, month, 1));
         const monthEnd = formatDate(new Date(year, month + 1, 0));
         
-        const monthPayments = (payments || []).filter(p => 
-            p.date >= monthStart && p.date <= monthEnd
-        );
-        const monthBonuses = (bonuses || []).filter(b => 
-            b.date >= monthStart && b.date <= monthEnd
-        );
+        const monthPayments = payments.filter(p => p.date >= monthStart && p.date <= monthEnd);
+        const monthBonuses = bonuses.filter(b => b.date >= monthStart && b.date <= monthEnd);
         
         const monthActual = monthPayments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0) +
                            monthBonuses.reduce((s, b) => s + (parseFloat(b.amount) || 0), 0);
@@ -423,71 +364,14 @@ async function calculateYearStats(year, getLang) {
     
     return {
         actual: Math.round(totalActual * 100) / 100,
-        paymentsCount: (payments || []).length,
-        bonusesCount: (bonuses || []).length,
         monthlyBreakdown
     };
 }
 
-// ── Головний рендер вкладки зарплати ──────────────────────
-export async function renderSalaryMonth(getLang) {
-    const lang = getLang();
-    updateSalaryLocale(lang);
-    
-    const year = currentMonth.getFullYear();
-    const month = currentMonth.getMonth();
-    
-    // Оновлюємо заголовок місяця
-    const monthNames = lang === 'pl' 
-        ? ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień']
-        : ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'];
-    
-    document.getElementById('salary-month-title').innerText = `${monthNames[month]} ${year}`;
-    document.getElementById('year-title').innerText = `${lang === 'pl' ? 'Rok' : 'Рік'} ${year}`;
-    
-    // Отримуємо дані
-    const { workDays, bonuses } = await getWorkDaysForMonth(year, month, getLang);
-    const payments = await getSalaryPayments(year, month);
-    const otherBonuses = await getOtherBonuses(year, month);
-    
-    const projected = calculateProjectedSalary(workDays, bonuses);
-    const actual = calculateActualPayments(payments);
-    
-    // Сума інших доплат за місяць
-    const otherBonusesTotal = otherBonuses.reduce((s, b) => s + (parseFloat(b.amount) || 0), 0);
-    
-    // Оновлюємо статистику
-    document.getElementById('stat-work-days').innerText = projected.workDaysCount;
-    document.getElementById('stat-vacation-days').innerText = projected.vacationDays;
-    document.getElementById('stat-sick-days').innerText = projected.sickDays;
-    document.getElementById('stat-other-bonus').innerText = `${otherBonusesTotal.toFixed(2)} PLN`;
-    document.getElementById('stat-projected').innerText = `${projected.total.toFixed(2)} PLN`;
-    document.getElementById('stat-actual').innerText = `${actual.total.toFixed(2)} PLN`;
-    
-    // Різниця
-    const diff = actual.total - projected.total;
-    const diffEl = document.getElementById('stat-diff');
-    diffEl.innerText = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} PLN`;
-    diffEl.style.color = diff >= 0 ? 'var(--accent)' : 'var(--red)';
-    
-    // Рендеримо список виплат
-    renderPaymentsList(payments, getLang);
-    
-    // Рендеримо список інших доплат
-    renderBonusesList(otherBonuses, getLang);
-    
-    // Рендеримо річну статистику (тільки фактична)
-    const yearStats = await calculateYearStats(year, getLang);
-    document.getElementById('year-actual').innerText = `${yearStats.actual.toFixed(2)} PLN`;
-    
-    // Рендеримо графік
-    renderMonthlyChart(yearStats.monthlyBreakdown, lang);
-}
-
-// ── Рендер списку виплат зарплати ─────────────────────────
-function renderPaymentsList(payments, getLang) {
+// ── Рендер списку виплат ─────────────────────────────────
+function renderPaymentsList(payments, lang) {
     const container = document.getElementById('payments-list');
-    const lang = getLang();
+    if (!container) return;
     
     if (!payments || payments.length === 0) {
         container.innerHTML = `<p class="text-center text-[var(--muted)] text-sm py-4">${lang === 'pl' ? 'Brak wypłat' : 'Немає виплат'}</p>`;
@@ -495,25 +379,29 @@ function renderPaymentsList(payments, getLang) {
     }
     
     container.innerHTML = payments.map(payment => `
-        <div class="transaction-item ${isAdmin ? 'clickable' : ''}" data-id="${payment.id}" onclick="${isAdmin ? `window._editPayment('${payment.id}')` : ''}">
+        <div class="transaction-item" data-id="${payment.id}">
             <div class="flex justify-between items-center">
                 <div>
                     <p class="transaction-date">${fmtDisplay(parseLocal(payment.date))}</p>
                     <span class="transaction-type">${lang === 'pl' ? 'Wypłata' : 'Виплата'}</span>
                     ${payment.note ? `<p class="transaction-note">${payment.note}</p>` : ''}
                 </div>
-                <p class="transaction-amount positive">
-                    ${parseFloat(payment.amount).toFixed(2)} PLN
-                </p>
+                <p class="transaction-amount">${parseFloat(payment.amount).toFixed(2)} PLN</p>
             </div>
         </div>
     `).join('');
+    
+    if (isAdmin) {
+        container.querySelectorAll('.transaction-item').forEach(el => {
+            el.addEventListener('click', () => openPaymentModal(el.dataset.id, () => lang));
+        });
+    }
 }
 
-// ── Рендер списку інших доплат ────────────────────────────
-function renderBonusesList(bonuses, getLang) {
+// ── Рендер списку доплат ─────────────────────────────────
+function renderBonusesList(bonuses, lang) {
     const container = document.getElementById('bonuses-list');
-    const lang = getLang();
+    if (!container) return;
     
     if (!bonuses || bonuses.length === 0) {
         container.innerHTML = `<p class="text-center text-[var(--muted)] text-sm py-4">${lang === 'pl' ? 'Brak dodatków' : 'Немає доплат'}</p>`;
@@ -521,22 +409,26 @@ function renderBonusesList(bonuses, getLang) {
     }
     
     container.innerHTML = bonuses.map(bonus => `
-        <div class="transaction-item ${isAdmin ? 'clickable' : ''}" data-id="${bonus.id}" onclick="${isAdmin ? `window._editBonus('${bonus.id}')` : ''}">
+        <div class="transaction-item" data-id="${bonus.id}">
             <div class="flex justify-between items-center">
                 <div>
                     <p class="transaction-date">${fmtDisplay(parseLocal(bonus.date))}</p>
                     <span class="transaction-type">${lang === 'pl' ? 'Dodatek' : 'Доплата'}</span>
                     ${bonus.note ? `<p class="transaction-note">${bonus.note}</p>` : ''}
                 </div>
-                <p class="transaction-amount positive">
-                    ${parseFloat(bonus.amount).toFixed(2)} PLN
-                </p>
+                <p class="transaction-amount">${parseFloat(bonus.amount).toFixed(2)} PLN</p>
             </div>
         </div>
     `).join('');
+    
+    if (isAdmin) {
+        container.querySelectorAll('.transaction-item').forEach(el => {
+            el.addEventListener('click', () => openBonusModal(el.dataset.id, () => lang));
+        });
+    }
 }
 
-// ── Рендер графіку місячної розбивки (тільки фактична) ────
+// ── Рендер графіку ───────────────────────────────────────
 function renderMonthlyChart(monthlyBreakdown, lang) {
     const container = document.getElementById('monthly-chart');
     if (!container) return;
@@ -552,22 +444,100 @@ function renderMonthlyChart(monthlyBreakdown, lang) {
             ${monthlyBreakdown.map((m, i) => `
                 <div class="chart-bar-group">
                     <div class="chart-bars">
-                        <div class="chart-bar actual" style="height: ${(m.actual / maxValue * 100)}%"></div>
+                        <div class="chart-bar" style="height: ${(m.actual / maxValue * 100)}%"></div>
                     </div>
                     <span class="chart-label">${monthLabels[i]}</span>
                 </div>
             `).join('')}
         </div>
         <div class="chart-legend">
-            <span><span class="legend-color actual"></span> ${lang === 'pl' ? 'Faktyczna' : 'Фактична'}</span>
+            <span><span class="legend-color"></span> ${lang === 'pl' ? 'Faktyczna' : 'Фактична'}</span>
         </div>
     `;
 }
 
-// ── Модальне вікно для додавання виплати ───────────────────
+// ── Головний рендер ──────────────────────────────────────
+export async function renderSalaryMonth(getLang) {
+    const lang = getLang();
+    const year = currentMonth.getFullYear();
+    const month = currentMonth.getMonth();
+    
+    const monthNames = lang === 'pl' 
+        ? ['Styczeń', 'Luty', 'Marzec', 'Kwiecień', 'Maj', 'Czerwiec', 'Lipiec', 'Sierpień', 'Wrzesień', 'Październik', 'Listopad', 'Grudzień']
+        : ['Січень', 'Лютий', 'Березень', 'Квітень', 'Травень', 'Червень', 'Липень', 'Серпень', 'Вересень', 'Жовтень', 'Листопад', 'Грудень'];
+    
+    document.getElementById('salary-month-title').innerText = `${monthNames[month]} ${year}`;
+    document.getElementById('year-title').innerText = `${lang === 'pl' ? 'Rok' : 'Рік'} ${year}`;
+    
+    const isConnected = await checkSupabaseConnection();
+    if (!isConnected) {
+        const errorMsg = lang === 'pl' ? '❌ Brak połączenia z bazą danych!' : '❌ Немає зв\'язку з базою даних!';
+        document.getElementById('payments-list').innerHTML = `<p class="error-state">${errorMsg}</p>`;
+        document.getElementById('bonuses-list').innerHTML = `<p class="error-state">${errorMsg}</p>`;
+        showToast(errorMsg);
+        return;
+    }
+    
+    const workDays = await getWorkDaysForMonth(year, month);
+    const payments = await getPaymentsForMonth(year, month);
+    const bonuses = await getBonusesForMonth(year, month);
+    
+    const projected = calculateProjectedSalary(workDays, bonuses);
+    const actualTotal = payments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0);
+    
+    document.getElementById('stat-work-days').innerText = projected.workDaysCount;
+    document.getElementById('stat-vacation-days').innerText = projected.vacationDays;
+    document.getElementById('stat-sick-days').innerText = projected.sickDays;
+    document.getElementById('stat-other-bonus').innerText = `${projected.bonusesTotal.toFixed(2)} PLN`;
+    document.getElementById('stat-projected').innerText = `${projected.total.toFixed(2)} PLN`;
+    document.getElementById('stat-actual').innerText = `${actualTotal.toFixed(2)} PLN`;
+    
+    const diff = actualTotal - projected.total;
+    const diffEl = document.getElementById('stat-diff');
+    diffEl.innerText = `${diff >= 0 ? '+' : ''}${diff.toFixed(2)} PLN`;
+    diffEl.style.color = diff >= 0 ? 'var(--accent)' : 'var(--red)';
+    
+    renderPaymentsList(payments, lang);
+    renderBonusesList(bonuses, lang);
+    
+    const yearStats = await calculateYearStats(year);
+    document.getElementById('year-actual').innerText = `${yearStats.actual.toFixed(2)} PLN`;
+    renderMonthlyChart(yearStats.monthlyBreakdown, lang);
+}
+
+// ── Ініціалізація модуля ─────────────────────────────────
+export async function initBank(getLang) {
+    const lang = getLang();
+    updateSalaryLocale(lang);
+    await renderSalaryMonth(getLang);
+}
+
+// ── Оновлення текстів при зміні мови ─────────────────────
+function updateSalaryLocale(lang) {
+    const t = i18n[lang];
+    
+    const labels = {
+        'stat-work-days-label': t.workDays,
+        'stat-vacation-days-label': t.vacationDays,
+        'stat-sick-days-label': t.sickDays,
+        'stat-other-bonus-label': t.otherBonus,
+        'stat-projected-label': t.projectedSalary,
+        'stat-actual-label': t.actualSalary,
+        'stat-diff-label': t.difference,
+        'transactions-title': t.transactions,
+        'bonuses-title': t.bonuses,
+        'year-actual-label': t.actualYearly
+    };
+    
+    for (const [id, text] of Object.entries(labels)) {
+        const el = document.getElementById(id);
+        if (el) el.innerText = text;
+    }
+}
+
+// ── Модальне вікно для виплати ───────────────────────────
 export async function openPaymentModal(existingId = null, getLang) {
     const lang = getLang();
-    
     editingSalaryRecord = existingId;
     
     let record = null;
@@ -592,14 +562,12 @@ export async function openPaymentModal(existingId = null, getLang) {
     document.getElementById('trans-type').disabled = true;
     
     document.getElementById('trans-delete-btn').style.display = existingId ? '' : 'none';
-    
     openModal('modal-transaction');
 }
 
-// ── Модальне вікно для додавання іншої доплати ────────────
+// ── Модальне вікно для доплати ───────────────────────────
 export async function openBonusModal(existingId = null, getLang) {
     const lang = getLang();
-    
     editingSalaryRecord = existingId;
     
     let record = null;
@@ -624,11 +592,10 @@ export async function openBonusModal(existingId = null, getLang) {
     document.getElementById('trans-type').disabled = true;
     
     document.getElementById('trans-delete-btn').style.display = existingId ? '' : 'none';
-    
     openModal('modal-transaction');
 }
 
-// ── Збереження транзакції ─────────────────────────────────
+// ── Збереження транзакції ────────────────────────────────
 export async function saveTransaction(getLang) {
     const lang = getLang();
     const date = document.getElementById('trans-date').value;
@@ -636,50 +603,81 @@ export async function saveTransaction(getLang) {
     const type = document.getElementById('trans-type').value;
     const note = document.getElementById('trans-note').value;
     
-    if (isNaN(amount)) {
-        showToast(lang === 'pl' ? 'Wprowadź kwotę!' : 'Введіть суму!');
+    if (isNaN(amount) || amount <= 0) {
+        showToast(lang === 'pl' ? 'Wprowadź poprawną kwotę!' : 'Введіть коректну суму!');
         return;
     }
     
-    if (editingSalaryRecord) {
-        await supabase
-            .from('bank')
-            .update({ date, amount, type, note })
-            .eq('id', editingSalaryRecord);
-    } else {
-        await supabase
-            .from('bank')
-            .insert([{ date, amount, type, note }]);
+    if (!date) {
+        showToast(lang === 'pl' ? 'Wybierz datę!' : 'Виберіть дату!');
+        return;
     }
     
-    closeModal('modal-transaction');
-    showToast(i18n[lang].save + ' ✓');
-    await renderSalaryMonth(getLang);
+    try {
+        if (editingSalaryRecord) {
+            const { error } = await supabase
+                .from('bank')
+                .update({ date, amount, type, note })
+                .eq('id', editingSalaryRecord);
+            if (error) throw error;
+        } else {
+            const { error } = await supabase
+                .from('bank')
+                .insert([{ date, amount, type, note }]);
+            if (error) throw error;
+        }
+        
+        closeModal('modal-transaction');
+        showToast(i18n[lang].save + ' ✓');
+        await renderSalaryMonth(getLang);
+    } catch (error) {
+        console.error('Save error:', error);
+        showToast(lang === 'pl' ? 'Błąd zapisu!' : 'Помилка збереження!');
+    }
 }
 
-// ── Видалення транзакції ──────────────────────────────────
+// ── Видалення транзакції ─────────────────────────────────
 export async function deleteTransaction(getLang) {
     if (!editingSalaryRecord) return;
     
     const lang = getLang();
-    await supabase
-        .from('bank')
-        .delete()
-        .eq('id', editingSalaryRecord);
     
-    closeModal('modal-transaction');
-    showToast(i18n[lang].delete + ' ✓');
-    await renderSalaryMonth(getLang);
+    try {
+        const { error } = await supabase
+            .from('bank')
+            .delete()
+            .eq('id', editingSalaryRecord);
+        
+        if (error) throw error;
+        
+        closeModal('modal-transaction');
+        showToast(i18n[lang].delete + ' ✓');
+        await renderSalaryMonth(getLang);
+    } catch (error) {
+        console.error('Delete error:', error);
+        showToast(lang === 'pl' ? 'Błąd usuwania!' : 'Помилка видалення!');
+    }
 }
 
-// ── Навігація по місяцях ──────────────────────────────────
+// ── Навігація по місяцях ─────────────────────────────────
 export function shiftMonth(delta) {
     currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + delta, 1);
     renderSalaryMonth(window._getLang);
 }
 
-// ── Зміна року ────────────────────────────────────────────
+// ── Зміна року ───────────────────────────────────────────
 export function changeYear(delta) {
     currentMonth = new Date(currentMonth.getFullYear() + delta, currentMonth.getMonth(), 1);
     renderSalaryMonth(window._getLang);
-        }
+}
+
+// ── Тест підключення ─────────────────────────────────────
+export async function testConnection() {
+    const isConnected = await checkSupabaseConnection();
+    if (isConnected) {
+        showToast('✅ Połączenie z bazą danych działa!');
+    } else {
+        showToast('❌ Brak połączenia z bazą danych!');
+    }
+    return isConnected;
+}
