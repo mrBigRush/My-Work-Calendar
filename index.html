@@ -291,8 +291,7 @@ window._switchTab = (tab) => {
     document.getElementById('tab-bank').style.display     = tab === 'bank'     ? '' : 'none';
     document.getElementById('report-btn').style.display   = tab === 'calendar' ? '' : 'none';
     if (tab === 'tacho')    renderTachoWeek(getLang);
-    if (tab === 'bank') {
-    document.getElementById('bank-payments').innerHTML = 'LOADING...';
+    if (tab === 'bank') renderBank();
     import('./js/bank.js').then(m => m.renderBank());
 }
     if (tab === 'calendar' && window.calendar) setTimeout(() => window.calendar.updateSize(), 50);
