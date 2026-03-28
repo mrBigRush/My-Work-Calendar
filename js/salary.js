@@ -62,9 +62,9 @@ async function getWorkDays(year, month) {
 // Отримання виплат за місяц розрахунку
 async function getPayments(year, month) {
     try {
-        const start = formatDate(new Date(year, month, 1));
-        const end = formatDate(new Date(year, month + 1, 0));
-        const { data, error } = await supabase.from('bank').select('*').eq('type', 'payment').gte('date', start).lte('date', end).order('date');
+        const monthStr = String(month + 1).padStart(2, '0');
+        const yearMonth = `${year}-${monthStr}`;
+        const { data, error } = await supabase.from('bank').select('*').eq('type', 'payment').eq('year_month', yearMonth).order('date');
         if (error) throw error;
         return data || [];
     } catch (err) {
@@ -76,9 +76,9 @@ async function getPayments(year, month) {
 // Отримання доплат за місяц розрахунку
 async function getBonuses(year, month) {
     try {
-        const start = formatDate(new Date(year, month, 1));
-        const end = formatDate(new Date(year, month + 1, 0));
-        const { data, error } = await supabase.from('bank').select('*').eq('type', 'bonus').gte('date', start).lte('date', end).order('date');
+        const monthStr = String(month + 1).padStart(2, '0');
+        const yearMonth = `${year}-${monthStr}`;
+        const { data, error } = await supabase.from('bank').select('*').eq('type', 'bonus').eq('year_month', yearMonth).order('date');
         if (error) throw error;
         return data || [];
     } catch (err) {
@@ -195,11 +195,9 @@ export async function renderSalary(getLang) {
         }
         
         // Річна статистика
-        const yearStart = formatDate(new Date(year, 0, 1));
-        const yearEnd = formatDate(new Date(year, 11, 31));
-        const { data: allYearPayments, error: yearError } = await supabase.from('bank').select('*').eq('type', 'payment').gte('date', yearStart).lte('date', yearEnd);
+        const { data: allYearPayments, error: yearError } = await supabase.from('bank').select('*').eq('type', 'payment');
         if (yearError) throw yearError;
-        const yearPayments = allYearPayments || [];
+        const yearPayments = (allYearPayments || []).filter(p => p.year_month && p.year_month.startsWith(String(year)));
         const yearTotal = yearPayments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
         document.getElementById('year-actual').innerText = yearTotal + ' PLN';
     } catch (err) {
@@ -232,9 +230,8 @@ export async function openPaymentModal(id, getLang) {
     }
     document.getElementById('trans-modal-title').innerText = id ? (lang === 'pl' ? 'Edytuj wypłatę' : 'Редагувати виплату') : (lang === 'pl' ? 'Dodaj wypłatę' : 'Додати виплату');
     document.getElementById('trans-date').value = record?.date || formatDate(new Date());
-    // Set default month based on transaction date
-    const recordDate = record?.date ? parseLocal(record.date) : new Date();
-    const defaultMonth = formatDate(new Date(recordDate.getFullYear(), recordDate.getMonth(), 1)).substring(0, 7);
+    // Use record's year_month if available, otherwise use current month
+    const defaultMonth = record?.year_month || currentMonth.getFullYear() + '-' + String(currentMonth.getMonth() + 1).padStart(2, '0');
     console.log('Setting month to:', defaultMonth);
     document.getElementById('trans-month').value = defaultMonth;
     document.getElementById('trans-amount').value = record?.amount || '';
@@ -261,9 +258,8 @@ export async function openBonusModal(id, getLang) {
     }
     document.getElementById('trans-modal-title').innerText = id ? (lang === 'pl' ? 'Edytuj dodatek' : 'Редагувати доплату') : (lang === 'pl' ? 'Dodaj dodatek' : 'Додати доплату');
     document.getElementById('trans-date').value = record?.date || formatDate(new Date());
-    // Set default month based on transaction date
-    const recordDate = record?.date ? parseLocal(record.date) : new Date();
-    const defaultMonth = formatDate(new Date(recordDate.getFullYear(), recordDate.getMonth(), 1)).substring(0, 7);
+    // Use record's year_month if available, otherwise use current month
+    const defaultMonth = record?.year_month || currentMonth.getFullYear() + '-' + String(currentMonth.getMonth() + 1).padStart(2, '0');
     document.getElementById('trans-month').value = defaultMonth;
     document.getElementById('trans-amount').value = record?.amount || '';
     document.getElementById('trans-note').value = record?.note || '';
@@ -275,22 +271,23 @@ export async function openBonusModal(id, getLang) {
 export async function saveTransaction(getLang) {
     const lang = getLang();
     const date = document.getElementById('trans-date').value;
-    const month_display = document.getElementById('trans-month').value; // For display only
+    const year_month = document.getElementById('trans-month').value;
     const amount = parseFloat(document.getElementById('trans-amount').value);
     const type = document.getElementById('trans-type').value;
     const note = document.getElementById('trans-note').value || '';
     
-    console.log('Saving transaction:', { date, month_display, amount, type, note, editingId });
+    console.log('Saving transaction:', { date, year_month, amount, type, note, editingId });
     
-    if (!date || isNaN(amount) || amount <= 0) {
-        showToast(lang === 'pl' ? 'Wprowadź poprawną kwotę i datę!' : 'Введіть коректну суму та дату!');
+    if (!date || !year_month || isNaN(amount) || amount <= 0) {
+        showToast(lang === 'pl' ? 'Wprowadź poprawną kwotę, datę i miesiąc!' : 'Введіть коректну суму, дату та місяц!');
         return;
     }
     
     try {
-        // Prepare data object (storing only date, amount, type, note)
+        // Prepare data object (with year_month for proper accounting period)
         const dataToSave = {
             date: date,
+            year_month: year_month,
             amount: parseFloat(amount.toFixed(2)),
             type: type,
             note: note
