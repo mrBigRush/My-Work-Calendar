@@ -272,34 +272,36 @@ export async function saveTransaction(getLang) {
         return;
     }
     
-    // Ensure amount is a number (not a string)
-    const dataToSave = {
-        date: date,
-        year_month: year_month,
-        amount: parseFloat(amount.toFixed(2)),
-        type: type,
-        note: note
-    };
-    
     try {
-        let error;
+        // Prepare data object
+        const dataToSave = {
+            date: date,
+            year_month: year_month,
+            amount: parseFloat(amount.toFixed(2)),
+            type: type,
+            note: note
+        };
+        
+        // Add ID if editing
         if (editingId) {
-            const result = await supabase.from('bank').update(dataToSave).eq('id', editingId);
-            console.log('Update response:', result);
-            error = result.error;
-        } else {
-            const result = await supabase.from('bank').insert([dataToSave]);
-            console.log('Insert response:', result);
-            error = result.error;
+            dataToSave.id = editingId;
         }
         
-        if (error) {
-            console.error('Supabase error:', error);
-            throw error;
+        console.log('Data to save:', dataToSave);
+        
+        // Use upsert for more reliable operation
+        const result = await supabase.from('bank').upsert([dataToSave]);
+        
+        console.log('Upsert response:', result);
+        
+        if (result.error) {
+            console.error('Supabase upsert error:', result.error);
+            throw result.error;
         }
         
         closeModal('modal-transaction');
         showToast(i18n[lang].save + ' ✓');
+        editingId = null;
         await renderSalary(getLang);
     } catch (err) {
         console.error('Error saving transaction:', err);
@@ -310,7 +312,7 @@ export async function saveTransaction(getLang) {
             context: err.context,
             status: err.status
         });
-        showToast(lang === 'pl' ? 'Błąd przy zapisywaniu danych!' : 'Помилка при збереженні!');
+        showToast(lang === 'pl' ? 'Błąd przy zapisywaniu danych: ' + err.message : 'Помилка при збереженні: ' + err.message);
     }
 }
 
@@ -319,15 +321,29 @@ export async function deleteTransaction(getLang) {
     const lang = getLang();
     
     try {
-        const { error } = await supabase.from('bank').delete().eq('id', editingId);
-        if (error) throw error;
+        console.log('Deleting transaction with id:', editingId);
+        
+        const result = await supabase.from('bank').delete().eq('id', editingId);
+        
+        console.log('Delete response:', result);
+        
+        if (result.error) {
+            console.error('Supabase delete error:', result.error);
+            throw result.error;
+        }
         
         closeModal('modal-transaction');
         showToast(i18n[lang].save + ' ✓');
+        editingId = null;
         await renderSalary(getLang);
     } catch (err) {
         console.error('Error deleting transaction:', err);
-        showToast(lang === 'pl' ? 'Błąd przy usuwaniu danych!' : 'Помилка при видаленні!');
+        console.error('Error details:', { 
+            message: err.message, 
+            code: err.code, 
+            details: err.details
+        });
+        showToast(lang === 'pl' ? 'Błąd przy usuwaniu danych: ' + err.message : 'Помилка при видаленні: ' + err.message);
     }
 }
 
