@@ -1,0 +1,110 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@400;500;700&display=swap');
+
+:root {
+    --bg: #f5f4f0; --surface: #ffffff; --border: #e2e0d8;
+    --text: #1a1916; --muted: #8a8880;
+    --accent: #2d6a4f; --accent-light: #e8f5ee;
+    --blue: #1d4ed8; --blue-light: #eff6ff;
+    --red: #dc2626; --red-light: #fef2f2;
+    --orange: #d97706; --orange-light: #fffbeb;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--text); font-family: var(--sans); min-height: 100vh; }
+
+/* ── FullCalendar overrides ── */
+.fc { font-family: var(--sans) !important; font-size: 0.85rem; }
+.fc-toolbar-title { font-family: var(--mono) !important; font-size: 1rem !important; font-weight: 600 !important; }
+.fc-button { font-family: var(--mono) !important; font-size: 0.75rem !important; background: var(--surface) !important; border: 1px solid var(--border) !important; color: var(--text) !important; border-radius: 6px !important; }
+.fc-button:hover { background: var(--bg) !important; }
+.fc-button-active, .fc-button-primary:not(:disabled):active { background: var(--text) !important; color: var(--surface) !important; }
+.fc-daygrid-day-number { font-family: var(--mono); font-size: 0.75rem; }
+.fc-col-header-cell-cushion { font-family: var(--mono); font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em; }
+.fc-highlight { background: rgba(45,106,79,0.12) !important; }
+.type-work     { background-color: var(--accent) !important; border: none !important; border-radius: 3px; }
+.type-vacation { background-color: var(--blue)   !important; border: none !important; border-radius: 3px; }
+.type-sick     { background-color: var(--red)    !important; border: none !important; border-radius: 3px; }
+.fc-event-title { font-family: var(--mono); font-size: 0.65rem; font-weight: 600; }
+.fc-event { cursor: pointer !important; pointer-events: none; }
+.fc-daygrid-day { cursor: pointer; }
+.fc-daygrid-day { position: relative; }
+.fc-daygrid-day.has-tacho::after { content: '🚛'; font-size: 0.5rem; position: absolute; bottom: 2px; right: 3px; line-height: 1; pointer-events: none; }
+
+/* ── Tabs ── */
+.tab-btn { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.5rem 1.25rem; border-radius: 8px; transition: all 0.15s; border: 1px solid transparent; cursor: pointer; background: transparent; color: var(--muted); }
+.tab-btn.active { background: var(--text); color: var(--surface); border-color: var(--text); }
+.tab-btn:not(.active):hover { background: var(--border); color: var(--text); }
+
+/* ── Stat cards ── */
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 0.75rem 1rem; }
+.stat-label { font-family: var(--mono); font-size: 0.6rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
+.stat-value { font-family: var(--mono); font-size: 1.75rem; font-weight: 600; line-height: 1; }
+
+/* ── Week bars ── */
+.week-bar-bg   { background: var(--border); border-radius: 4px; height: 6px; overflow: hidden; }
+.week-bar-fill { height: 100%; border-radius: 4px; transition: width 0.4s ease; }
+
+/* ── Tacho day rows ── */
+.day-row { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1rem; transition: border-color 0.15s, box-shadow 0.15s; }
+.day-row.clickable { cursor: pointer; }
+.day-row.clickable:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(45,106,79,0.08); }
+.day-row.has-data { border-left: 3px solid var(--accent); }
+.day-name  { font-family: var(--mono); font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.day-date  { font-family: var(--mono); font-size: 1rem; font-weight: 600; }
+.day-hours { font-family: var(--mono); font-size: 0.75rem; color: var(--accent); font-weight: 600; }
+
+/* ── Badges ── */
+.badge      { font-family: var(--mono); font-size: 0.6rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 20px; }
+.badge-10   { background: var(--orange-light); color: var(--orange); }
+.badge-15   { background: var(--red-light);    color: var(--red); }
+.badge-9h   { background: var(--blue-light);   color: var(--blue); }
+
+/* ── Modal (bottom sheet) ── */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(26,25,22,0.55); backdrop-filter: blur(4px); z-index: 100; display: flex; align-items: flex-end; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+.modal-backdrop.open { opacity: 1; pointer-events: all; }
+.modal { background: var(--surface); border-radius: 20px 20px 0 0; width: 100%; max-width: 480px; padding: 1.25rem 1.25rem 2.5rem; transform: translateY(40px); transition: transform 0.25s ease; box-shadow: 0 -8px 40px rgba(0,0,0,0.15); max-height: 92vh; overflow-y: auto; }
+.modal-backdrop.open .modal { transform: translateY(0); }
+.modal-handle { width: 36px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 1rem; }
+.modal-title { font-family: var(--mono); font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; }
+.modal-section { border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem; }
+.modal-section-title { font-family: var(--mono); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 0.75rem; }
+
+/* ── Type chips ── */
+.type-chip { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.35rem; padding: 0.75rem 0.5rem; border-radius: 12px; border: 2px solid transparent; cursor: pointer; transition: all 0.15s; background: var(--bg); }
+.type-chip.sel-work     { border-color: var(--accent); background: var(--accent-light); }
+.type-chip.sel-vacation { border-color: var(--blue);   background: var(--blue-light); }
+.type-chip.sel-sick     { border-color: var(--red);    background: var(--red-light); }
+
+/* ── Form ── */
+.field-label { font-family: var(--mono); font-size: 0.65rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.3rem; display: block; }
+.field-input { width: 100%; font-family: var(--mono); font-size: 0.9rem; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem 0.75rem; outline: none; transition: border-color 0.15s; color: var(--text); }
+.field-input:focus { border-color: var(--accent); }
+
+/* ── Toggle ── */
+.toggle-row { display: flex; align-items: center; justify-content: space-between; padding: 0.65rem 0.75rem; border-bottom: 1px solid var(--border); }
+.toggle-row:last-child { border-bottom: none; }
+.toggle-label { font-family: var(--sans); font-size: 0.82rem; font-weight: 500; }
+.toggle-desc  { font-family: var(--mono); font-size: 0.6rem; color: var(--muted); }
+.toggle { width: 40px; height: 22px; background: var(--border); border-radius: 11px; position: relative; cursor: pointer; transition: background 0.2s; flex-shrink: 0; }
+.toggle.on { background: var(--accent); }
+.toggle::after { content: ''; position: absolute; width: 16px; height: 16px; background: white; border-radius: 50%; top: 3px; left: 3px; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+.toggle.on::after { transform: translateX(18px); }
+
+/* ── Buttons ── */
+.btn-primary   { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; background: var(--text); color: var(--surface); border: none; border-radius: 8px; padding: 0.65rem 1.25rem; cursor: pointer; transition: opacity 0.15s; width: 100%; }
+.btn-primary:hover { opacity: 0.85; }
+.btn-secondary { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; background: var(--bg); color: var(--text); border: 1px solid var(--border); border-radius: 8px; padding: 0.65rem 1.25rem; cursor: pointer; width: 100%; }
+.btn-secondary:hover { background: var(--border); }
+.btn-danger    { font-family: var(--mono); font-size: 0.75rem; font-weight: 600; background: var(--red-light); color: var(--red); border: 1px solid #fecaca; border-radius: 8px; padding: 0.65rem 1.25rem; cursor: pointer; width: 100%; }
+.btn-danger:hover { background: #fee2e2; }
+
+/* ── Week nav ── */
+.week-nav-btn { font-family: var(--mono); font-size: 0.9rem; font-weight: 700; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; width: 34px; height: 34px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.week-nav-btn:hover { background: var(--bg); }
+.week-date-input { font-family: var(--mono); font-size: 0.8rem; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.35rem 0.6rem; outline: none; color: var(--text); cursor: pointer; }
+.week-date-input:focus { border-color: var(--accent); }
+
+/* ── Toast ── */
+#toast { position: fixed; bottom: 1.5rem; left: 50%; transform: translateX(-50%) translateY(60px); background: var(--text); color: var(--surface); font-family: var(--mono); font-size: 0.75rem; padding: 0.6rem 1.25rem; border-radius: 8px; transition: transform 0.25s; z-index: 200; white-space: nowrap; }
+#toast.show { transform: translateX(-50%) translateY(0); }
