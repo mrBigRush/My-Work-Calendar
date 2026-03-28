@@ -90,12 +90,23 @@ export async function renderTachoWeek(getLang) {
 
     const wd = all.filter(r => weekDates.includes(r.date));
 
+    console.log('Tacho week render:', {
+        weekStart: ws,
+        weekEnd: we,
+        weekDates: weekDates,
+        allRecords: all.length,
+        weekRecords: wd.length,
+        weekData: wd.map(r => ({ date: r.date, driving_hours: r.driving_hours, parsed: parseDriving(r.driving_hours) }))
+    });
+
     // ── Weekly stats ──
     const totalDr = wd.reduce((s, r) => s + parseDriving(r.driving_hours), 0);
     const e10     = wd.filter(r => r.used_extended_10).length;
     const e15     = wd.filter(r => r.used_extended_15).length;
     const sr      = wd.filter(r => r.reduced_rest_9h).length;
     const totalDrStr = decimalToHHMM(totalDr);
+
+    console.log('Total driving hours calculated:', totalDr, 'formatted:', totalDrStr);
 
     // Last rest before week start: find the day just before week
     const dayBeforeWeek = all.find(r => r.date === addDays(ws, -1));
