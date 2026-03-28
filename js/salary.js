@@ -282,21 +282,23 @@ export async function saveTransaction(getLang) {
             note: note
         };
         
-        // Add ID if editing
+        // Add ID only if editing existing record
         if (editingId) {
             dataToSave.id = editingId;
         }
         
         console.log('Data to save:', dataToSave);
         
-        // Use upsert for more reliable operation
-        const result = await supabase.from('bank').upsert([dataToSave]);
-        
-        console.log('Upsert response:', result);
-        
-        if (result.error) {
-            console.error('Supabase upsert error:', result.error);
-            throw result.error;
+        if (editingId) {
+            // Update existing record
+            const result = await supabase.from('bank').update(dataToSave).eq('id', editingId);
+            console.log('Update response:', result);
+            if (result.error) throw result.error;
+        } else {
+            // Insert new record (don't use upsert for new records)
+            const result = await supabase.from('bank').insert([dataToSave]);
+            console.log('Insert response:', result);
+            if (result.error) throw result.error;
         }
         
         closeModal('modal-transaction');
@@ -312,7 +314,8 @@ export async function saveTransaction(getLang) {
             context: err.context,
             status: err.status
         });
-        showToast(lang === 'pl' ? 'Błąd przy zapisywaniu danych: ' + err.message : 'Помилка при збереженні: ' + err.message);
+        const errorMsg = err.message || (lang === 'pl' ? 'Błąd przy zapisywaniu danych!' : 'Помилка при збереженні!');
+        showToast(lang === 'pl' ? 'Błąd: ' + errorMsg : 'Помилка: ' + errorMsg);
     }
 }
 
