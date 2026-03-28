@@ -4,6 +4,23 @@ import { i18n } from './config.js';
 import { isAdmin } from './auth.js';
 import { formatDate, parseLocal, fmtDisplay, showToast, openModal, closeModal } from './utils.js';
 
+// Test database connection
+export async function testBankTableConnection() {
+    try {
+        console.log('Testing bank table connection...');
+        const { data, error } = await supabase.from('bank').select('count()', { count: 'exact' }).limit(1);
+        if (error) {
+            console.error('Bank table error:', error);
+            return { success: false, error: error.message };
+        }
+        console.log('Bank table connection OK. Data:', data);
+        return { success: true, data };
+    } catch (err) {
+        console.error('Test error:', err);
+        return { success: false, error: err.message };
+    }
+}
+
 let currentMonth = new Date();
 let editingId = null;
 
