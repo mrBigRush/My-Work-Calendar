@@ -16,28 +16,25 @@ export function addSalaryStyles() {
     const style = document.createElement('style');
     style.id = 'salary-styles';
     style.textContent = `
-        .salary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; margin-bottom: 1rem; }
-        .salary-card { background: white; border: 1px solid #e2e0d8; border-radius: 12px; padding: 0.75rem; text-align: center; }
-        .salary-label { font-family: monospace; font-size: 0.6rem; font-weight: 600; text-transform: uppercase; color: #8a8880; }
-        .salary-value { font-family: monospace; font-size: 1.25rem; font-weight: 700; }
-        .tx-item { background: white; border: 1px solid #e2e0d8; border-radius: 10px; padding: 0.75rem; margin-bottom: 0.5rem; cursor: pointer; }
-        .tx-item:hover { border-color: #2d6a4f; background: #e8f5ee; }
-        .tx-date { font-family: monospace; font-size: 0.7rem; font-weight: 600; color: #8a8880; }
-        .tx-type { font-family: monospace; font-size: 0.65rem; background: #f5f4f0; padding: 0.15rem 0.5rem; border-radius: 12px; display: inline-block; }
-        .tx-amount { font-family: monospace; font-size: 0.9rem; font-weight: 700; color: #2d6a4f; text-align: right; }
-        .year-stats { background: #f5f4f0; border-radius: 12px; padding: 0.75rem; margin-top: 1rem; }
-        .year-row { display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #e2e0d8; }
-        .year-nav { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 0.75rem; }
-        .year-btn { background: white; border: 1px solid #e2e0d8; border-radius: 8px; width: 28px; height: 28px; cursor: pointer; font-family: monospace; }
-        .flex-between { display: flex; justify-content: space-between; align-items: center; }
-        .text-right { text-align: right; }
-        .mt-2 { margin-top: 0.5rem; }
-        .mb-2 { margin-bottom: 0.5rem; }
-        .text-center { text-align: center; }
-        .text-sm { font-size: 0.75rem; }
-        .text-muted { color: #8a8880; }
+        .tx-item { background: white; border: 1px solid #e2e0d8; border-radius: 10px; padding: 0.75rem 1rem; margin-bottom: 0.5rem; cursor: pointer; transition: border-color 0.15s; }
+        .tx-item:hover { border-color: #2d6a4f; box-shadow: 0 2px 8px rgba(45,106,79,0.08); }
+        .tx-item-empty { text-align: center; color: #8a8880; font-size: 0.75rem; padding: 1.5rem 0.75rem; }
+        .tx-date { font-family: IBM Plex Mono, monospace; font-size: 0.7rem; font-weight: 600; color: #8a8880; display: block; margin-bottom: 0.25rem; }
+        .tx-type { font-family: IBM Plex Mono, monospace; font-size: 0.65rem; background: #f5f4f0; color: #8a8880; padding: 0.2rem 0.5rem; border-radius: 4px; display: inline-block; margin-right: 0.5rem; }
+        .tx-note { font-family: IBM Plex Sans, sans-serif; font-size: 0.75rem; color: #8a8880; display: block; margin-top: 0.25rem; }
+        .tx-amount { font-family: IBM Plex Mono, monospace; font-size: 0.9rem; font-weight: 700; color: #2d6a4f; text-align: right; }
+        .tx-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
     `;
     document.head.appendChild(style);
+}
+
+// Допоміжна функція для формування місяца розрахунку (попередній місяц від сьогодні)
+function formatDefaultMonth() {
+    const today = new Date();
+    const prevMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+    const year = prevMonth.getFullYear();
+    const month = String(prevMonth.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
 }
 
 // Отримання робочих днів за місяць
@@ -48,19 +45,19 @@ async function getWorkDays(year, month) {
     return data || [];
 }
 
-// Отримання виплат за місяць
+// Отримання виплат за місяц розрахунку
 async function getPayments(year, month) {
-    const start = formatDate(new Date(year, month, 1));
-    const end = formatDate(new Date(year, month + 1, 0));
-    const { data } = await supabase.from('bank').select('*').eq('type', 'payment').gte('date', start).lte('date', end).order('date');
+    const monthStr = String(month + 1).padStart(2, '0');
+    const yearMonth = `${year}-${monthStr}`;
+    const { data } = await supabase.from('bank').select('*').eq('type', 'payment').eq('year_month', yearMonth).order('date');
     return data || [];
 }
 
-// Отримання доплат за місяць
+// Отримання доплат за місяц розрахунку
 async function getBonuses(year, month) {
-    const start = formatDate(new Date(year, month, 1));
-    const end = formatDate(new Date(year, month + 1, 0));
-    const { data } = await supabase.from('bank').select('*').eq('type', 'bonus').gte('date', start).lte('date', end).order('date');
+    const monthStr = String(month + 1).padStart(2, '0');
+    const yearMonth = `${year}-${monthStr}`;
+    const { data } = await supabase.from('bank').select('*').eq('type', 'bonus').eq('year_month', yearMonth).order('date');
     return data || [];
 }
 
@@ -122,15 +119,15 @@ export async function renderSalary(getLang) {
     const payList = document.getElementById('payments-list');
     if (payList) {
         if (!payments.length) {
-            payList.innerHTML = `<p class="text-center text-muted text-sm">${lang === 'pl' ? 'Brak wypłat' : 'Немає виплат'}</p>`;
+            payList.innerHTML = `<p class="tx-item-empty">${lang === 'pl' ? 'Brak wypłat' : 'Немає виплат'}</p>`;
         } else {
             payList.innerHTML = payments.map(p => `
                 <div class="tx-item" data-id="${p.id}">
-                    <div class="flex-between">
-                        <div>
+                    <div class="tx-header">
+                        <div style="flex: 1;">
                             <div class="tx-date">${fmtDisplay(parseLocal(p.date))}</div>
                             <span class="tx-type">${lang === 'pl' ? 'Wypłata' : 'Виплата'}</span>
-                            ${p.note ? `<div class="text-sm text-muted">${p.note}</div>` : ''}
+                            ${p.note ? `<div class="tx-note">${p.note}</div>` : ''}
                         </div>
                         <div class="tx-amount">${parseFloat(p.amount).toFixed(2)} PLN</div>
                     </div>
@@ -148,15 +145,15 @@ export async function renderSalary(getLang) {
     const bonusList = document.getElementById('bonuses-list');
     if (bonusList) {
         if (!bonuses.length) {
-            bonusList.innerHTML = `<p class="text-center text-muted text-sm">${lang === 'pl' ? 'Brak dodatków' : 'Немає доплат'}</p>`;
+            bonusList.innerHTML = `<p class="tx-item-empty">${lang === 'pl' ? 'Brak dodatków' : 'Немає доплат'}</p>`;
         } else {
             bonusList.innerHTML = bonuses.map(b => `
                 <div class="tx-item" data-id="${b.id}">
-                    <div class="flex-between">
-                        <div>
+                    <div class="tx-header">
+                        <div style="flex: 1;">
                             <div class="tx-date">${fmtDisplay(parseLocal(b.date))}</div>
                             <span class="tx-type">${lang === 'pl' ? 'Dodatek' : 'Доплата'}</span>
-                            ${b.note ? `<div class="text-sm text-muted">${b.note}</div>` : ''}
+                            ${b.note ? `<div class="tx-note">${b.note}</div>` : ''}
                         </div>
                         <div class="tx-amount">${parseFloat(b.amount).toFixed(2)} PLN</div>
                     </div>
@@ -171,36 +168,15 @@ export async function renderSalary(getLang) {
     }
     
     // Річна статистика
-    const startYear = formatDate(new Date(year, 0, 1));
-    const endYear = formatDate(new Date(year, 11, 31));
-    const { data: allPayments } = await supabase.from('bank').select('*').gte('date', startYear).lte('date', endYear);
-    const yearTotal = (allPayments || []).reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
+    const { data: allYearPayments } = await supabase.from('bank').select('*').eq('type', 'payment');
+    const yearPayments = (allYearPayments || []).filter(p => p.year_month && p.year_month.startsWith(String(year)));
+    const yearTotal = yearPayments.reduce((s, p) => s + (parseFloat(p.amount) || 0), 0);
     document.getElementById('year-actual').innerText = yearTotal + ' PLN';
 }
 
 // Ініціалізація
 export async function initSalary(getLang) {
     const lang = getLang();
-    const t = i18n[lang];
-    
-    const labels = {
-        'stat-work-label': t.workDays || 'Dni pracy',
-        'stat-vacation-label': t.vacationDays || 'Urlop',
-        'stat-sick-label': t.sickDays || 'Choroba',
-        'stat-bonus-label': t.otherBonus || 'Inne dopłaty',
-        'stat-projected-label': t.projectedSalary || 'Prognozowana',
-        'stat-actual-label': t.actualSalary || 'Faktyczna',
-        'stat-diff-label': t.difference || 'Różnica',
-        'payments-title': t.transactions || 'Wypłaty',
-        'bonuses-title': t.bonuses || 'Dodatki',
-        'year-actual-label': t.actualYearly || 'Faktyczna roczna'
-    };
-    
-    for (const [id, text] of Object.entries(labels)) {
-        const el = document.getElementById(id);
-        if (el) el.innerText = text;
-    }
-    
     await renderSalary(getLang);
 }
 
@@ -215,6 +191,9 @@ export async function openPaymentModal(id, getLang) {
     }
     document.getElementById('trans-modal-title').innerText = id ? (lang === 'pl' ? 'Edytuj wypłatę' : 'Редагувати виплату') : (lang === 'pl' ? 'Dodaj wypłatę' : 'Додати виплату');
     document.getElementById('trans-date').value = record?.date || formatDate(new Date());
+    // Месяц разчуку - по умолчанию предыдущий месяц (так как выплаты за предыдущий месяц)
+    const defaultMonth = record?.year_month || formatDefaultMonth();
+    document.getElementById('trans-month').value = defaultMonth;
     document.getElementById('trans-amount').value = record?.amount || '';
     document.getElementById('trans-note').value = record?.note || '';
     document.getElementById('trans-type').value = 'payment';
@@ -232,6 +211,7 @@ export async function openBonusModal(id, getLang) {
     }
     document.getElementById('trans-modal-title').innerText = id ? (lang === 'pl' ? 'Edytuj dodatek' : 'Редагувати доплату') : (lang === 'pl' ? 'Dodaj dodatek' : 'Додати доплату');
     document.getElementById('trans-date').value = record?.date || formatDate(new Date());
+    document.getElementById('trans-month').value = record?.year_month || currentMonth.getFullYear() + '-' + String(currentMonth.getMonth() + 1).padStart(2, '0');
     document.getElementById('trans-amount').value = record?.amount || '';
     document.getElementById('trans-note').value = record?.note || '';
     document.getElementById('trans-type').value = 'bonus';
@@ -242,19 +222,20 @@ export async function openBonusModal(id, getLang) {
 export async function saveTransaction(getLang) {
     const lang = getLang();
     const date = document.getElementById('trans-date').value;
+    const year_month = document.getElementById('trans-month').value;
     const amount = parseFloat(document.getElementById('trans-amount').value);
     const type = document.getElementById('trans-type').value;
     const note = document.getElementById('trans-note').value;
     
-    if (!date || isNaN(amount) || amount <= 0) {
-        showToast(lang === 'pl' ? 'Wprowadź poprawną kwotę i datę!' : 'Введіть коректну суму та дату!');
+    if (!date || !year_month || isNaN(amount) || amount <= 0) {
+        showToast(lang === 'pl' ? 'Wprowadź poprawną kwotę, datę i miesiąc!' : 'Введіть коректну суму, дату та місяц!');
         return;
     }
     
     if (editingId) {
-        await supabase.from('bank').update({ date, amount, type, note }).eq('id', editingId);
+        await supabase.from('bank').update({ date, amount, type, note, year_month }).eq('id', editingId);
     } else {
-        await supabase.from('bank').insert([{ date, amount, type, note }]);
+        await supabase.from('bank').insert([{ date, amount, type, note, year_month }]);
     }
     
     closeModal('modal-transaction');
