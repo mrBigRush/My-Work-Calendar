@@ -264,6 +264,8 @@ export async function saveTransaction(getLang) {
     const type = document.getElementById('trans-type').value;
     const note = document.getElementById('trans-note').value;
     
+    console.log('Saving transaction:', { date, year_month, amount, type, note, editingId });
+    
     if (!date || !year_month || isNaN(amount) || amount <= 0) {
         showToast(lang === 'pl' ? 'Wprowadź poprawną kwotę, datę i miesiąc!' : 'Введіть коректну суму, дату та місяц!');
         return;
@@ -271,10 +273,12 @@ export async function saveTransaction(getLang) {
     
     try {
         if (editingId) {
-            const { error } = await supabase.from('bank').update({ date, amount, type, note, year_month }).eq('id', editingId);
+            const { data, error } = await supabase.from('bank').update({ date, amount, type, note, year_month }).eq('id', editingId);
+            console.log('Update response:', { data, error });
             if (error) throw error;
         } else {
-            const { error } = await supabase.from('bank').insert([{ date, amount, type, note, year_month }]);
+            const { data, error } = await supabase.from('bank').insert([{ date, amount, type, note, year_month }]);
+            console.log('Insert response:', { data, error });
             if (error) throw error;
         }
         
@@ -283,6 +287,7 @@ export async function saveTransaction(getLang) {
         await renderSalary(getLang);
     } catch (err) {
         console.error('Error saving transaction:', err);
+        console.error('Error details:', { message: err.message, code: err.code, details: err.details });
         showToast(lang === 'pl' ? 'Błąd przy zapisywaniu danych!' : 'Помилка при збереженні!');
     }
 }
