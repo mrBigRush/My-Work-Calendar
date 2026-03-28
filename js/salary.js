@@ -223,6 +223,7 @@ export async function openPaymentModal(id, getLang) {
     document.getElementById('trans-modal-title').innerText = id ? (lang === 'pl' ? 'Edytuj wypłatę' : 'Редагувати виплату') : (lang === 'pl' ? 'Dodaj wypłatę' : 'Додати виплату');
     document.getElementById('trans-date').value = record?.date || formatDate(new Date());
     const defaultMonth = record?.year_month || formatDefaultMonth();
+    console.log('Setting month to:', defaultMonth);
     document.getElementById('trans-month').value = defaultMonth;
     document.getElementById('trans-amount').value = record?.amount || '';
     document.getElementById('trans-note').value = record?.note || '';
@@ -262,7 +263,7 @@ export async function saveTransaction(getLang) {
     const year_month = document.getElementById('trans-month').value;
     const amount = parseFloat(document.getElementById('trans-amount').value);
     const type = document.getElementById('trans-type').value;
-    const note = document.getElementById('trans-note').value;
+    const note = document.getElementById('trans-note').value || '';
     
     console.log('Saving transaction:', { date, year_month, amount, type, note, editingId });
     
@@ -271,15 +272,30 @@ export async function saveTransaction(getLang) {
         return;
     }
     
+    // Ensure amount is a number (not a string)
+    const dataToSave = {
+        date: date,
+        year_month: year_month,
+        amount: parseFloat(amount.toFixed(2)),
+        type: type,
+        note: note
+    };
+    
     try {
+        let error;
         if (editingId) {
-            const { data, error } = await supabase.from('bank').update({ date, amount, type, note, year_month }).eq('id', editingId);
-            console.log('Update response:', { data, error });
-            if (error) throw error;
+            const result = await supabase.from('bank').update(dataToSave).eq('id', editingId);
+            console.log('Update response:', result);
+            error = result.error;
         } else {
-            const { data, error } = await supabase.from('bank').insert([{ date, amount, type, note, year_month }]);
-            console.log('Insert response:', { data, error });
-            if (error) throw error;
+            const result = await supabase.from('bank').insert([dataToSave]);
+            console.log('Insert response:', result);
+            error = result.error;
+        }
+        
+        if (error) {
+            console.error('Supabase error:', error);
+            throw error;
         }
         
         closeModal('modal-transaction');
@@ -287,7 +303,13 @@ export async function saveTransaction(getLang) {
         await renderSalary(getLang);
     } catch (err) {
         console.error('Error saving transaction:', err);
-        console.error('Error details:', { message: err.message, code: err.code, details: err.details });
+        console.error('Error details:', { 
+            message: err.message, 
+            code: err.code, 
+            details: err.details,
+            context: err.context,
+            status: err.status
+        });
         showToast(lang === 'pl' ? 'Błąd przy zapisywaniu danych!' : 'Помилка при збереженні!');
     }
 }
