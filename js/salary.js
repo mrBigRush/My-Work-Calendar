@@ -267,16 +267,16 @@ export async function deleteTransaction(getLang) {
     const lang = getLang();
     await supabase.from('bank').delete().eq('id', editingId);
     closeModal('modal-transaction');
-    showToast(i18n[lang].delete + ' ✓');
+    showToast(i18n[lang].save + ' ✓');
     await renderSalary(getLang);
 }
 
-export function shiftMonth(delta) {
+export async function shiftMonth(delta) {
     currentMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + delta, 1);
-    renderSalary(window._getLang);
+    await renderSalary(window._getLang);
 }
 
-export function changeYear(delta) {
+export async function changeYear(delta) {
     currentMonth = new Date(currentMonth.getFullYear() + delta, currentMonth.getMonth(), 1);
-    renderSalary(window._getLang);
+    await renderSalary(window._getLang);
 }
