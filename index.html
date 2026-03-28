@@ -318,6 +318,7 @@ window._switchTab = (tab) => {
         b.classList.toggle('active', b.dataset.tab === tab));
     document.getElementById('tab-calendar').style.display = tab === 'calendar' ? '' : 'none';
     document.getElementById('tab-tacho').style.display    = tab === 'tacho'    ? '' : 'none';
+    document.getElementById('tab-salary').style.display   = tab === 'salary'   ? '' : 'none';
     document.getElementById('report-btn').style.display   = tab === 'calendar' ? '' : 'none';
     if (tab === 'tacho')    renderTachoWeek(getLang);
     if (tab === 'calendar' && window.calendar) setTimeout(() => window.calendar.updateSize(), 50);
