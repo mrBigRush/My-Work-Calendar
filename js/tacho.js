@@ -124,9 +124,9 @@ export async function renderTachoWeek(getLang) {
         if (rest >= 24 && rest < 45) compensationOwed += (45 - rest);
     });
 
-    setBar('driving',     totalDr, 56, `${totalDrStr}/56:00`);
+    setBar('driving',     totalDr, 56, `${totalDrStr}/56`);
     setBar('ext10',       e10,     2,  `${e10}/2`);
-    setBar('ext15',       e15,     2,  `${e15}/2`);
+    setBar('ext15',       e15,     3,  `${e15}/3`);
     setBar('short-rests', sr,      3,  `${sr}/3`);
 
     // Last rest info
